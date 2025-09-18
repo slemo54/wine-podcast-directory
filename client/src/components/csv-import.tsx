@@ -1,0 +1,235 @@
+import { useState, useRef } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
+import { FileText, Upload, CheckCircle, AlertCircle } from "lucide-react";
+
+interface ImportResult {
+  success: boolean;
+  imported: number;
+  errors: number;
+  errorMessages: string[];
+}
+
+export function CSVImport() {
+  const [file, setFile] = useState<File | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const importMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('csvFile', file);
+      
+      const response = await fetch('/api/podcasts/import', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Import failed');
+      }
+      
+      return response.json() as Promise<ImportResult>;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/podcasts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
+      
+      toast({
+        title: "Import Successful!",
+        description: `${data.imported} podcasts imported successfully. ${data.errors > 0 ? `${data.errors} rows had errors.` : ''}`,
+      });
+      
+      setFile(null);
+    },
+    onError: () => {
+      toast({
+        title: "Import Failed",
+        description: "There was an error importing your CSV file. Please check the format and try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    const droppedFile = e.dataTransfer.files?.[0];
+    if (droppedFile && droppedFile.type === "text/csv") {
+      setFile(droppedFile);
+    } else {
+      toast({
+        title: "Invalid File",
+        description: "Please upload a CSV file.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+    }
+  };
+
+  const handleImport = () => {
+    if (file) {
+      importMutation.mutate(file);
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  return (
+    <div className="bg-card rounded-xl p-6 border border-border">
+      <div className="max-w-2xl mx-auto">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FileText className="text-2xl text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Import Podcast Data</h2>
+          <p className="text-muted-foreground">Upload a CSV file to add new podcasts to the directory</p>
+        </div>
+
+        {/* CSV Upload Area */}
+        <div
+          className={`border-2 border-dashed rounded-lg p-8 text-center mb-6 transition-colors cursor-pointer ${
+            dragActive
+              ? "border-primary/50 bg-primary/5"
+              : "border-border hover:border-primary/50"
+          }`}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+          onClick={triggerFileInput}
+          data-testid="csv-dropzone"
+        >
+          <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">
+            {file ? file.name : "Drop your CSV file here"}
+          </h3>
+          <p className="text-muted-foreground mb-4">or click to browse</p>
+          
+          <input
+            type="file"
+            accept=".csv"
+            className="hidden"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            data-testid="input-csv-file"
+          />
+          
+          <Button onClick={triggerFileInput} data-testid="button-choose-file">
+            Choose File
+          </Button>
+        </div>
+
+        {/* Selected File */}
+        {file && (
+          <div className="bg-muted rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary" />
+                <span className="font-medium">{file.name}</span>
+                <span className="text-sm text-muted-foreground">
+                  ({(file.size / 1024).toFixed(1)} KB)
+                </span>
+              </div>
+              <Button
+                onClick={handleImport}
+                disabled={importMutation.isPending}
+                data-testid="button-import-csv"
+              >
+                {importMutation.isPending ? "Importing..." : "Import CSV"}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Upload Progress */}
+        {importMutation.isPending && (
+          <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+              <span className="font-medium">Processing CSV file...</span>
+            </div>
+            <Progress value={65} className="mb-2" />
+            <p className="text-sm text-muted-foreground">Validating and importing podcast data</p>
+          </div>
+        )}
+
+        {/* Upload Results */}
+        {importMutation.data && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center gap-3 mb-2">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              <span className="font-medium text-green-800">Upload Successful!</span>
+            </div>
+            <div className="text-sm text-green-700">
+              <p>• {importMutation.data.imported} podcasts imported successfully</p>
+              {importMutation.data.errors > 0 && (
+                <p>• {importMutation.data.errors} rows skipped due to errors</p>
+              )}
+            </div>
+            {importMutation.data.errorMessages.length > 0 && (
+              <details className="mt-2">
+                <summary className="cursor-pointer text-sm text-green-700 hover:text-green-800">
+                  View Error Details
+                </summary>
+                <ul className="mt-2 text-sm text-green-600 space-y-1">
+                  {importMutation.data.errorMessages.map((error, index) => (
+                    <li key={index}>• {error}</li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </div>
+        )}
+
+        {/* CSV Format Guide */}
+        <div className="bg-muted rounded-lg p-4">
+          <h4 className="font-semibold mb-2 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-primary" />
+            Required CSV Format
+          </h4>
+          <div className="text-sm text-muted-foreground">
+            <p className="mb-2">Your CSV file should include these columns:</p>
+            <div className="grid grid-cols-2 gap-2 font-mono text-xs">
+              <span>• Podcast Title</span>
+              <span>• Podcast Host(s)</span>
+              <span>• Country of Production</span>
+              <span>• Primary Language(s)</span>
+              <span>• Year Launched</span>
+              <span>• Is currently active?</span>
+              <span>• Categories</span>
+              <span>• Episode Length</span>
+            </div>
+            <p className="mt-2 text-xs">
+              Optional columns: Description, Episodes, Spotify URL, Instagram URL, YouTube URL, Website URL
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
