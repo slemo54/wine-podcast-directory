@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { MapPin, Calendar, Clock, Heart, Image, ExternalLink } from "lucide-react";
+import { MapPin, Calendar, Clock, Heart, Image, ExternalLink, Youtube } from "lucide-react";
+import { SiSpotify, SiInstagram, SiApple, SiX } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -73,12 +74,12 @@ function PodcastImage({ src, alt, className, testId }: PodcastImageProps) {
 }
 
 const SOCIAL_ICON_MAP = {
-  spotify: "fab fa-spotify",
-  instagram: "fab fa-instagram", 
-  youtube: "fab fa-youtube",
-  website: "fas fa-external-link-alt",
-  apple: "fab fa-apple",
-  twitter: "fab fa-twitter",
+  spotify: SiSpotify,
+  instagram: SiInstagram, 
+  youtube: Youtube,
+  website: ExternalLink,
+  apple: SiApple,
+  twitter: SiX,
 };
 
 const SOCIAL_LABELS = {
@@ -319,29 +320,31 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
               )}
 
               {/* Social Links Footer */}
-              <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Listen on</span>
+              <div className="flex items-center justify-end pt-4 border-t border-border/50">
                 <div className="flex gap-2">
-                  {availableSocials.map(platform => (
-                    <Tooltip key={platform}>
-                      <TooltipTrigger asChild>
-                        <a
-                          href={podcast.socialLinks?.[platform as keyof typeof podcast.socialLinks]}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`w-9 h-9 rounded-full flex items-center justify-center text-white transition-all duration-300 hover:scale-110 hover:shadow-lg ${
-                            SOCIAL_COLOR_MAP[platform as keyof typeof SOCIAL_COLOR_MAP]
-                          }`}
-                          data-testid={`link-social-${platform}-${podcast.id}`}
-                        >
-                          <i className={`${SOCIAL_ICON_MAP[platform as keyof typeof SOCIAL_ICON_MAP]} text-sm`}></i>
-                        </a>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{SOCIAL_LABELS[platform as keyof typeof SOCIAL_LABELS]}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
+                  {availableSocials.map(platform => {
+                    const IconComponent = SOCIAL_ICON_MAP[platform as keyof typeof SOCIAL_ICON_MAP];
+                    return (
+                      <Tooltip key={platform}>
+                        <TooltipTrigger asChild>
+                          <a
+                            href={podcast.socialLinks?.[platform as keyof typeof podcast.socialLinks]}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`w-9 h-9 rounded-full flex items-center justify-center text-white transition-all duration-300 hover:scale-110 hover:shadow-lg ${
+                              SOCIAL_COLOR_MAP[platform as keyof typeof SOCIAL_COLOR_MAP]
+                            }`}
+                            data-testid={`link-social-${platform}-${podcast.id}`}
+                          >
+                            <IconComponent className="w-4 h-4" />
+                          </a>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{SOCIAL_LABELS[platform as keyof typeof SOCIAL_LABELS]}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -462,10 +465,10 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
           )}
 
           {/* Social Links */}
-          <div className="flex items-center gap-3 pt-2 border-t border-border/50">
-            <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Listen on</span>
-            <div className="flex gap-2 flex-1">
-              {availableSocials.map(platform => (
+          <div className="flex items-center justify-center gap-2 pt-2 border-t border-border/50">
+            {availableSocials.map(platform => {
+              const IconComponent = SOCIAL_ICON_MAP[platform as keyof typeof SOCIAL_ICON_MAP];
+              return (
                 <Tooltip key={platform}>
                   <TooltipTrigger asChild>
                     <a
@@ -477,15 +480,15 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
                       } group-hover:animate-pulse`}
                       data-testid={`link-social-${platform}-${podcast.id}`}
                     >
-                      <i className={`${SOCIAL_ICON_MAP[platform as keyof typeof SOCIAL_ICON_MAP]} text-sm`}></i>
+                      <IconComponent className="w-4 h-4" />
                     </a>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>{SOCIAL_LABELS[platform as keyof typeof SOCIAL_LABELS]}</p>
                   </TooltipContent>
                 </Tooltip>
-              ))}
-            </div>
+              );
+            })}
           </div>
         </div>
       </div>
