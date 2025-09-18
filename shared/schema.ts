@@ -23,6 +23,7 @@ export const podcasts = pgTable("podcasts", {
     apple?: string;
     twitter?: string;
   }>().default({}),
+  imageUrl: text("image_url"), // Logo/image URL for the podcast
 });
 
 // Favorites functionality removed per user requirements

@@ -141,7 +141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               const country = getColumnValue([
                 'Country of Production', 'country', 'Country', 'COUNTRY', 'nation', 'location'
-              ]);
+              ]) || 'Unknown'; // Default value for missing country
               
               const language = getColumnValue([
                 'Primary Language(s) of the Podcast', 'Primary Language(s)', 'language', 'Language', 'LANGUAGE', 'lang', 'languages',
@@ -152,7 +152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               const yearStr = getColumnValue([
                 'Year Launched', 'year', 'Year', 'YEAR', 'launch_year', 'start_year'
-              ]);
+              ]) || String(new Date().getFullYear()); // Default to current year if missing
               
               const status = getColumnValue([
                 'Is the podcast currently active?', 'Is currently active?', 'status', 'Status', 'STATUS', 'active', 'Active'
@@ -173,20 +173,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const description = getColumnValue([
                 'One-sentence description for the directory listing', 'Description', 'description', 'desc', 'about', 'summary'
               ]);
+              
+              const imageUrl = getColumnValue([
+                'Logo', 'logo', 'LOGO', 'image', 'Image', 'imageUrl', 'image_url', 'podcast_logo'
+              ]);
 
-              // Validate required fields with detailed info - allow empty values with defaults
+              // Validate required fields - country and year now have defaults
               if (!title) {
                 throw new Error(`Missing title. Row data: ${JSON.stringify(row)}`);
               }
               if (!host) {
                 throw new Error(`Missing host. Row data: ${JSON.stringify(row)}`);
               }
-              if (!country) {
-                throw new Error(`Missing country. Row data: ${JSON.stringify(row)}`);
-              }
-              // Language now has default, so we don't validate it as required
-              if (!yearStr || isNaN(parseInt(yearStr))) {
-                throw new Error(`Missing or invalid year: '${yearStr}'. Row data: ${JSON.stringify(row)}`);
+              
+              // Parse year with validation, but use default if invalid
+              let parsedYear = new Date().getFullYear(); // Default year
+              if (yearStr && !isNaN(parseInt(yearStr))) {
+                parsedYear = parseInt(yearStr);
               }
 
               const podcastData: InsertPodcast = {
@@ -194,7 +197,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 host,
                 country,
                 language,
-                year: parseInt(yearStr),
+                year: parsedYear,
                 status,
                 categories: categoriesStr.split(',').map((s: string) => s.trim()).filter(Boolean),
                 episodeLength,
@@ -205,7 +208,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   instagram: getColumnValue(['Instagram @', 'Instagram URL', 'instagram', 'Instagram', 'instagram_url']),
                   youtube: getColumnValue(['YouTube Link', 'YouTube URL', 'youtube', 'Youtube', 'youtube_url']),
                   website: getColumnValue(['Website', 'Website URL', 'website', 'site', 'url']),
-                }
+                },
+                imageUrl,
               };
 
               // Validate the data against schema
