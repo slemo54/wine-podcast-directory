@@ -4,13 +4,17 @@ import { SearchFilters } from "@/components/search-filters";
 import { PodcastCard } from "@/components/podcast-card";
 import { CSVImport } from "@/components/csv-import";
 import { Button } from "@/components/ui/button";
-import { Grid, List, Search, Upload } from "lucide-react";
-import type { Podcast, SearchFilters as SearchFiltersType } from "@shared/schema";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Grid, List, Search, Upload, Heart, FileText, LogOut, User as UserIcon } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import type { Podcast, SearchFilters as SearchFiltersType, UserFavorite, User } from "@shared/schema";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"discover" | "import">("discover");
+  const [activeTab, setActiveTab] = useState<"discover" | "favorites" | "notes" | "import">("discover");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchFilters, setSearchFilters] = useState<SearchFiltersType>({});
+  const { user } = useAuth() as { user: User | null };
 
   // Main podcasts query
   const { data: podcasts = [], isLoading } = useQuery<Podcast[]>({
@@ -18,14 +22,45 @@ export default function Home() {
     enabled: activeTab === "discover",
   });
 
-  // Favorites functionality removed per user requirements
+  // User favorites query
+  const { data: userFavorites = [] } = useQuery<UserFavorite[]>({
+    queryKey: ["/api/user/favorites"],
+    enabled: activeTab === "favorites",
+  });
+
+  // Favorite podcast IDs for quick lookup
+  const favoriteIds = new Set(userFavorites.map(fav => fav.podcastId));
+
+  // Get favorite podcasts with details
+  const { data: favoritePodcasts = [] } = useQuery<Podcast[]>({
+    queryKey: ["/api/podcasts", {}],
+    select: (data) => data.filter(podcast => favoriteIds.has(podcast.id)),
+    enabled: activeTab === "favorites" && userFavorites.length > 0,
+  });
 
   const handleFilterChange = (filters: SearchFiltersType) => {
     setSearchFilters(filters);
   };
 
-  const handleTabChange = (tab: "discover" | "import") => {
+  const handleTabChange = (tab: "discover" | "favorites" | "notes" | "import") => {
     setActiveTab(tab);
+  };
+
+  const handleLogout = () => {
+    window.location.href = "/api/logout";
+  };
+
+  const getUserDisplayName = () => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    if (user?.firstName) {
+      return user.firstName;
+    }
+    if (user?.email) {
+      return user.email.split('@')[0];
+    }
+    return 'User';
   };
 
   return (
@@ -33,13 +68,42 @@ export default function Home() {
       {/* Header */}
       <header className="wine-gradient text-white relative overflow-hidden">
         <div className="container mx-auto px-4 py-8 relative z-10">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4 text-shadow">
-              Wine Podcast Directory
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 opacity-90">
-              Discover premium wine podcasts from around the world
-            </p>
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex-1">
+              <h1 className="text-4xl md:text-6xl font-bold mb-4 text-shadow">
+                Wine Podcast Directory
+              </h1>
+              <p className="text-xl md:text-2xl opacity-90">
+                Discover premium wine podcasts from around the world
+              </p>
+            </div>
+            
+            {/* User Navigation */}
+            <div className="flex items-center gap-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="text-white hover:bg-white/10 p-2" data-testid="button-user-menu">
+                    <Avatar className="w-8 h-8 mr-2">
+                      <AvatarImage src={user?.profileImageUrl} />
+                      <AvatarFallback className="text-wine-dark">
+                        {getUserDisplayName().charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden md:inline">{getUserDisplayName()}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem disabled>
+                    <UserIcon className="mr-2 h-4 w-4" />
+                    <span data-testid="text-user-email">{user?.email}</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout} data-testid="button-logout">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign Out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
         <div className="absolute inset-0 bg-black opacity-20"></div>
@@ -62,7 +126,30 @@ export default function Home() {
               <Search className="w-4 h-4" />
               <span>Discover</span>
             </button>
-            {/* Favorites tab removed per user requirements */}
+            <button 
+              className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+                activeTab === "favorites" 
+                  ? "border-primary text-primary" 
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => handleTabChange("favorites")}
+              data-testid="tab-favorites"
+            >
+              <Heart className="w-4 h-4" />
+              <span>Favorites ({userFavorites.length})</span>
+            </button>
+            <button 
+              className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+                activeTab === "notes" 
+                  ? "border-primary text-primary" 
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => handleTabChange("notes")}
+              data-testid="tab-notes"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Notes</span>
+            </button>
             <button 
               className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
                 activeTab === "import" 
@@ -146,7 +233,72 @@ export default function Home() {
           </>
         )}
 
-        {/* Favorites functionality removed per user requirements */}
+        {/* Favorites Tab */}
+        {activeTab === "favorites" && (
+          <>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">Your Favorites ({userFavorites.length})</h2>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={viewMode === "grid" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode("grid")}
+                    data-testid="button-grid-view"
+                  >
+                    <Grid className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === "list" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode("list")}
+                    data-testid="button-list-view"
+                  >
+                    <List className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {favoritePodcasts.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Heart className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">No favorites yet</h3>
+                  <p className="text-muted-foreground">Start exploring podcasts and add them to your favorites!</p>
+                </div>
+              ) : (
+                <div className={`grid gap-6 ${
+                  viewMode === "grid" 
+                    ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
+                    : "grid-cols-1"
+                }`}>
+                  {favoritePodcasts.map((podcast) => (
+                    <PodcastCard
+                      key={podcast.id}
+                      podcast={podcast}
+                      viewMode={viewMode}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Notes Tab */}
+        {activeTab === "notes" && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">Your Notes</h2>
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <FileText className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Notes feature coming soon</h3>
+              <p className="text-muted-foreground">Add personal notes to your favorite podcasts.</p>
+            </div>
+          </div>
+        )}
 
         {/* Import Tab */}
         {activeTab === "import" && <CSVImport />}

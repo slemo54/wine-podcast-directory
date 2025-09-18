@@ -4,29 +4,55 @@ import multer from "multer";
 import csvParser from "csv-parser";
 import { Readable } from "stream";
 import { storage } from "./storage";
-import { insertPodcastSchema, searchFiltersSchema, type InsertPodcast } from "@shared/schema";
+import { insertPodcastSchema, insertUserNoteSchema, searchFiltersSchema, type InsertPodcast } from "@shared/schema";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 import { z } from "zod";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  
+  // Auth middleware setup
+  await setupAuth(app);
+
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
   // Get all podcasts with optional filtering
   app.get("/api/podcasts", async (req, res) => {
     try {
+      // Clean up query parameters - convert empty strings to undefined
+      const cleanQuery = (value: any) => {
+        if (typeof value === 'string' && value.trim() === '') return undefined;
+        return value || undefined;
+      };
+
       const filters = searchFiltersSchema.parse({
-        query: req.query.query as string,
-        episodeLength: req.query.episodeLength as string,
-        categories: req.query.categories ? (req.query.categories as string).split(',') : undefined,
-        status: req.query.status as string,
-        country: req.query.country as string,
-        sortBy: req.query.sortBy as any,
+        query: cleanQuery(req.query.query),
+        episodeLength: cleanQuery(req.query.episodeLength),
+        categories: req.query.categories && req.query.categories !== '' 
+          ? (Array.isArray(req.query.categories) 
+            ? req.query.categories 
+            : (req.query.categories as string).split(',').filter(Boolean))
+          : undefined,
+        status: cleanQuery(req.query.status),
+        country: cleanQuery(req.query.country),
+        sortBy: cleanQuery(req.query.sortBy) as any,
       });
       
       const podcasts = await storage.searchPodcasts(filters);
       res.json(podcasts);
     } catch (error) {
-      res.status(400).json({ message: "Invalid search parameters", error });
+      console.error("Search parameter error:", error);
+      res.status(400).json({ message: "Invalid search parameters", error: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
@@ -122,9 +148,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Favorites functionality removed per user requirements
+  // User favorites endpoints
+  app.get("/api/user/favorites", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const favorites = await storage.getUserFavorites(userId);
+      res.json(favorites);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch favorites", error });
+    }
+  });
 
-  // Statistics removed per user request
+  app.post("/api/user/favorites", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { podcastId } = req.body;
+      
+      if (!podcastId) {
+        return res.status(400).json({ message: "Podcast ID is required" });
+      }
+
+      const favorite = await storage.addUserFavorite({
+        userId,
+        podcastId,
+      });
+      res.status(201).json(favorite);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to add favorite", error });
+    }
+  });
+
+  app.delete("/api/user/favorites/:podcastId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { podcastId } = req.params;
+      
+      await storage.removeUserFavorite(userId, podcastId);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to remove favorite", error });
+    }
+  });
+
+  // User notes endpoints
+  app.get("/api/user/notes", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const notes = await storage.getUserNotes(userId);
+      res.json(notes);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch notes", error });
+    }
+  });
+
+  app.get("/api/user/notes/:podcastId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { podcastId } = req.params;
+      
+      const note = await storage.getUserNoteForPodcast(userId, podcastId);
+      if (!note) {
+        return res.status(404).json({ message: "Note not found" });
+      }
+      res.json(note);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch note", error });
+    }
+  });
+
+  app.post("/api/user/notes", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const noteData = insertUserNoteSchema.parse({
+        ...req.body,
+        userId,
+      });
+      
+      const note = await storage.createUserNote(noteData);
+      res.status(201).json(note);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid note data", error });
+    }
+  });
+
+  app.put("/api/user/notes/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { note } = req.body;
+      
+      if (!note) {
+        return res.status(400).json({ message: "Note text is required" });
+      }
+
+      const updatedNote = await storage.updateUserNote(id, note);
+      res.json(updatedNote);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update note", error });
+    }
+  });
+
+  app.delete("/api/user/notes/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteUserNote(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete note", error });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

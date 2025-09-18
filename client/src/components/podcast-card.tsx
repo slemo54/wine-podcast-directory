@@ -1,5 +1,11 @@
-import { MapPin, Calendar, Clock } from "lucide-react";
-import type { Podcast } from "@shared/schema";
+import { MapPin, Calendar, Clock, Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { isUnauthorizedError } from "@/lib/authUtils";
+import { useAuth } from "@/hooks/useAuth";
+import type { Podcast, UserFavorite } from "@shared/schema";
 
 interface PodcastCardProps {
   podcast: Podcast;
@@ -25,8 +31,89 @@ const SOCIAL_COLOR_MAP = {
 };
 
 export function PodcastCard({ podcast, viewMode = "grid" }: PodcastCardProps) {
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Favorites and view details functionality removed per user requirements
+  // Get user favorites to check if this podcast is favorited
+  const { data: userFavorites = [] } = useQuery<UserFavorite[]>({
+    queryKey: ["/api/user/favorites"],
+    enabled: isAuthenticated,
+  });
+
+  const isFavorited = userFavorites.some(fav => fav.podcastId === podcast.id);
+
+  // Add favorite mutation
+  const addFavoriteMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/user/favorites", { podcastId: podcast.id });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/favorites"] });
+      toast({
+        title: "Added to favorites",
+        description: `${podcast.title} has been added to your favorites.`,
+      });
+    },
+    onError: (error: Error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to add to favorites. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Remove favorite mutation
+  const removeFavoriteMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/user/favorites/${podcast.id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/favorites"] });
+      toast({
+        title: "Removed from favorites",
+        description: `${podcast.title} has been removed from your favorites.`,
+      });
+    },
+    onError: (error: Error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to remove from favorites. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleFavoriteToggle = () => {
+    if (isFavorited) {
+      removeFavoriteMutation.mutate();
+    } else {
+      addFavoriteMutation.mutate();
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -65,7 +152,23 @@ export function PodcastCard({ podcast, viewMode = "grid" }: PodcastCardProps) {
               <h3 className="font-semibold text-lg mb-1">{podcast.title}</h3>
               <p className="text-sm text-muted-foreground">{podcast.host}</p>
             </div>
-            {/* Favorites functionality removed per user requirements */}
+            {isAuthenticated && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleFavoriteToggle}
+                disabled={addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
+                data-testid={`button-favorite-${podcast.id}`}
+                className="flex items-center gap-2"
+              >
+                <Heart 
+                  className={`w-4 h-4 ${isFavorited ? "fill-red-500 text-red-500" : "text-muted-foreground"}`}
+                />
+                <span className="hidden md:inline">
+                  {isFavorited ? "Remove from favorites" : "Add to favorites"}
+                </span>
+              </Button>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-4 text-sm mb-3">
@@ -130,7 +233,22 @@ export function PodcastCard({ podcast, viewMode = "grid" }: PodcastCardProps) {
             <span className="text-xs font-medium">{podcast.status}</span>
           </div>
         </div>
-        {/* Favorites functionality removed per user requirements */}
+        {isAuthenticated && (
+          <div className="absolute top-4 right-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleFavoriteToggle}
+              disabled={addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
+              data-testid={`button-favorite-${podcast.id}`}
+              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border-0"
+            >
+              <Heart 
+                className={`w-4 h-4 ${isFavorited ? "fill-red-500 text-red-500" : "text-white"}`}
+              />
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="p-5">
