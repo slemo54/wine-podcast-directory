@@ -90,46 +90,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const podcasts: InsertPodcast[] = [];
       const errors: string[] = [];
       let rowNumber = 0;
+      let headers: string[] = [];
 
       const stream = Readable.from(req.file.buffer);
       
       await new Promise((resolve, reject) => {
         stream
           .pipe(csvParser())
+          .on('headers', (headerList) => {
+            headers = headerList;
+            console.log('CSV Headers found:', headers);
+          })
           .on('data', (row) => {
             rowNumber++;
+            
+            // Log first row for debugging
+            if (rowNumber === 1) {
+              console.log('First row data:', row);
+              console.log('Available columns:', Object.keys(row));
+            }
+            
             try {
-              // Map CSV columns to podcast schema
+              // Enhanced column mapping with more flexible matching
+              const getColumnValue = (columnNames: string[]): string | undefined => {
+                for (const colName of columnNames) {
+                  const exactMatch = row[colName];
+                  if (exactMatch !== undefined && exactMatch !== null && exactMatch !== '') {
+                    return String(exactMatch).trim();
+                  }
+                  
+                  // Try case-insensitive match
+                  const caseInsensitiveMatch = Object.keys(row).find(key => 
+                    key.toLowerCase() === colName.toLowerCase()
+                  );
+                  if (caseInsensitiveMatch && row[caseInsensitiveMatch]) {
+                    return String(row[caseInsensitiveMatch]).trim();
+                  }
+                }
+                return undefined;
+              };
+
+              // Map CSV columns to podcast schema with flexible matching
+              const title = getColumnValue([
+                'Podcast Title', 'title', 'Title', 'TITLE', 'podcast_title', 'name', 'Name'
+              ]);
+              
+              const host = getColumnValue([
+                'Podcast Host(s)', 'host', 'Host', 'HOST', 'hosts', 'Hosts', 'podcast_host'
+              ]);
+              
+              const country = getColumnValue([
+                'Country of Production', 'country', 'Country', 'COUNTRY', 'nation', 'location'
+              ]);
+              
+              const language = getColumnValue([
+                'Primary Language(s)', 'language', 'Language', 'LANGUAGE', 'lang', 'languages'
+              ]);
+              
+              const yearStr = getColumnValue([
+                'Year Launched', 'year', 'Year', 'YEAR', 'launch_year', 'start_year'
+              ]);
+              
+              const status = getColumnValue([
+                'Is currently active?', 'status', 'Status', 'STATUS', 'active', 'Active'
+              ]) || 'Active';
+              
+              const categoriesStr = getColumnValue([
+                'Categories', 'categories', 'Category', 'category', 'CATEGORIES', 'genre', 'genres'
+              ]) || '';
+              
+              const episodeLength = getColumnValue([
+                'Episode Length', 'episodeLength', 'episode_length', 'length', 'duration'
+              ]);
+              
+              const episodes = getColumnValue([
+                'Episodes', 'episodes', 'episode_count', 'total_episodes'
+              ]);
+              
+              const description = getColumnValue([
+                'Description', 'description', 'desc', 'about', 'summary'
+              ]);
+
+              // Validate required fields
+              if (!title) {
+                throw new Error('Missing title');
+              }
+              if (!host) {
+                throw new Error('Missing host');
+              }
+              if (!country) {
+                throw new Error('Missing country');
+              }
+              if (!language) {
+                throw new Error('Missing language');
+              }
+              if (!yearStr || isNaN(parseInt(yearStr))) {
+                throw new Error('Missing or invalid year');
+              }
+
               const podcastData: InsertPodcast = {
-                title: row['Podcast Title'] || row['title'],
-                host: row['Podcast Host(s)'] || row['host'],
-                country: row['Country of Production'] || row['country'],
-                language: row['Primary Language(s)'] || row['language'],
-                year: parseInt(row['Year Launched'] || row['year']),
-                status: row['Is currently active?'] || row['status'] || 'Active',
-                categories: (row['Categories'] || row['categories'] || '').split(',').map((s: string) => s.trim()).filter(Boolean),
-                episodeLength: row['Episode Length'] || row['episodeLength'],
-                episodes: row['Episodes'] || row['episodes'],
-                description: row['Description'] || row['description'],
+                title,
+                host,
+                country,
+                language,
+                year: parseInt(yearStr),
+                status,
+                categories: categoriesStr.split(',').map((s: string) => s.trim()).filter(Boolean),
+                episodeLength,
+                episodes,
+                description,
                 socialLinks: {
-                  spotify: row['Spotify URL'] || row['spotify'],
-                  instagram: row['Instagram URL'] || row['instagram'],
-                  youtube: row['YouTube URL'] || row['youtube'],
-                  website: row['Website URL'] || row['website'],
+                  spotify: getColumnValue(['Spotify URL', 'spotify', 'Spotify', 'spotify_url']),
+                  instagram: getColumnValue(['Instagram URL', 'instagram', 'Instagram', 'instagram_url']),
+                  youtube: getColumnValue(['YouTube URL', 'youtube', 'Youtube', 'youtube_url']),
+                  website: getColumnValue(['Website URL', 'website', 'Website', 'site', 'url']),
                 }
               };
 
-              // Validate the data
+              // Validate the data against schema
               const validatedData = insertPodcastSchema.parse(podcastData);
               podcasts.push(validatedData);
+              
             } catch (error) {
-              errors.push(`Row ${rowNumber}: ${error instanceof Error ? error.message : 'Invalid data'}`);
+              const errorMsg = error instanceof Error ? error.message : 'Invalid data';
+              errors.push(`Row ${rowNumber}: ${errorMsg}`);
+              console.error(`Row ${rowNumber} error:`, errorMsg, 'Data:', row);
             }
           })
           .on('end', resolve)
           .on('error', reject);
       });
 
+      console.log(`Processing complete. Valid podcasts: ${podcasts.length}, Errors: ${errors.length}`);
+      
       // Bulk insert valid podcasts
       const createdPodcasts = await storage.bulkCreatePodcasts(podcasts);
 
@@ -137,10 +230,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true,
         imported: createdPodcasts.length,
         errors: errors.length,
-        errorMessages: errors.slice(0, 10), // Return first 10 errors
+        errorMessages: errors.slice(0, 20), // Return first 20 errors
+        totalRows: rowNumber,
+        headers: headers,
         podcasts: createdPodcasts
       });
     } catch (error) {
+      console.error('CSV import failed:', error);
       res.status(500).json({ 
         message: "CSV import failed", 
         error: error instanceof Error ? error.message : 'Unknown error'

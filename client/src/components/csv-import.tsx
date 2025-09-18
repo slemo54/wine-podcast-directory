@@ -10,6 +10,9 @@ interface ImportResult {
   imported: number;
   errors: number;
   errorMessages: string[];
+  totalRows?: number;
+  headers?: string[];
+  podcasts?: any[];
 }
 
 export function CSVImport() {
@@ -180,27 +183,63 @@ export function CSVImport() {
 
         {/* Upload Results */}
         {importMutation.data && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+          <div className={`border rounded-lg p-4 mb-6 ${
+            importMutation.data.imported > 0 
+              ? 'bg-green-50 border-green-200' 
+              : 'bg-orange-50 border-orange-200'
+          }`}>
             <div className="flex items-center gap-3 mb-2">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              <span className="font-medium text-green-800">Upload Successful!</span>
+              {importMutation.data.imported > 0 ? (
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              ) : (
+                <AlertCircle className="w-5 h-5 text-orange-600" />
+              )}
+              <span className={`font-medium ${
+                importMutation.data.imported > 0 ? 'text-green-800' : 'text-orange-800'
+              }`}>
+                {importMutation.data.imported > 0 ? 'Import Successful!' : 'Import Issues Found'}
+              </span>
             </div>
-            <div className="text-sm text-green-700">
-              <p>• {importMutation.data.imported} podcasts imported successfully</p>
+            
+            <div className={`text-sm mb-3 ${
+              importMutation.data.imported > 0 ? 'text-green-700' : 'text-orange-700'
+            }`}>
+              <p>• Total rows processed: {importMutation.data.totalRows || 0}</p>
+              <p>• Podcasts imported: {importMutation.data.imported}</p>
               {importMutation.data.errors > 0 && (
-                <p>• {importMutation.data.errors} rows skipped due to errors</p>
+                <p>• Rows with errors: {importMutation.data.errors}</p>
               )}
             </div>
+
+            {importMutation.data.headers && (
+              <details className="mb-3">
+                <summary className={`cursor-pointer text-sm font-medium ${
+                  importMutation.data.imported > 0 ? 'text-green-700' : 'text-orange-700'
+                } hover:opacity-80`}>
+                  View CSV Headers ({importMutation.data.headers.length} columns)
+                </summary>
+                <div className={`mt-2 p-2 rounded text-xs font-mono ${
+                  importMutation.data.imported > 0 ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+                }`}>
+                  {importMutation.data.headers.join(', ')}
+                </div>
+              </details>
+            )}
+            
             {importMutation.data.errorMessages.length > 0 && (
               <details className="mt-2">
-                <summary className="cursor-pointer text-sm text-green-700 hover:text-green-800">
-                  View Error Details
+                <summary className={`cursor-pointer text-sm font-medium ${
+                  importMutation.data.imported > 0 ? 'text-green-700' : 'text-orange-700'
+                } hover:opacity-80`}>
+                  View Error Details ({importMutation.data.errorMessages.length} errors)
                 </summary>
-                <ul className="mt-2 text-sm text-green-600 space-y-1">
+                <div className={`mt-2 max-h-32 overflow-y-auto p-2 rounded text-xs font-mono ${
+                  importMutation.data.imported > 0 ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+                }`}>
                   {importMutation.data.errorMessages.map((error, index) => (
-                    <li key={index}>• {error}</li>
+                    <div key={index} className="mb-1">• {error}</div>
                   ))}
-                </ul>
+                </div>
               </details>
             )}
           </div>
