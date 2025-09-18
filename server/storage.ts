@@ -45,8 +45,11 @@ export interface IStorage {
   updatePodcast(id: string, podcast: InsertPodcast): Promise<Podcast | undefined>;
   deletePodcast(id: string): Promise<boolean>;
   
-  // User operations (required for Replit Auth)
+  // User operations (traditional auth)
   getUser(id: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: Omit<typeof users.$inferInsert, 'id' | 'createdAt' | 'updatedAt'>): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
   
   // User favorites
@@ -193,16 +196,38 @@ export class DatabaseStorage implements IStorage {
       const result = await db
         .delete(podcasts)
         .where(eq(podcasts.id, id));
-      return result.rowCount > 0;
+      return (result.rowCount ?? 0) > 0;
     } catch (error) {
       console.error('Failed to delete podcast:', error);
       return false;
     }
   }
 
-  // User operations (required for Replit Auth)
+  // User operations (traditional auth)
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(userData: Omit<typeof users.$inferInsert, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...userData,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
     return user;
   }
 

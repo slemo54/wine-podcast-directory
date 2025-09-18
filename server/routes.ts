@@ -5,7 +5,7 @@ import csvParser from "csv-parser";
 import { Readable } from "stream";
 import { storage, createDeduplicationKey } from "./storage";
 import { insertPodcastSchema, insertUserNoteSchema, searchFiltersSchema, type InsertPodcast, type Podcast } from "@shared/schema";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated, requireAdmin } from "./auth";
 import { z } from "zod";
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -14,17 +14,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware setup
   await setupAuth(app);
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
+  // Note: Auth routes (register, login, logout, user) are now handled in auth.ts
 
   // Get all podcasts with optional filtering
   app.get("/api/podcasts", async (req, res) => {
@@ -81,7 +71,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update single podcast (Admin only)
-  app.patch("/api/podcasts/:id", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/podcasts/:id", requireAdmin, async (req: any, res) => {
     try {
       const podcastData = insertPodcastSchema.parse(req.body);
       const updatedPodcast = await storage.updatePodcast(req.params.id, podcastData);
@@ -101,7 +91,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete single podcast (Admin only)
-  app.delete("/api/podcasts/:id", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/podcasts/:id", requireAdmin, async (req: any, res) => {
     try {
       const success = await storage.deletePodcast(req.params.id);
       
@@ -115,8 +105,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // CSV Import endpoint
-  app.post("/api/podcasts/import", upload.single('csvFile'), async (req, res) => {
+  // CSV Import endpoint (Admin only)
+  app.post("/api/podcasts/import", requireAdmin, upload.single('csvFile'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No CSV file provided" });
@@ -335,7 +325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User favorites endpoints
   app.get("/api/user/favorites", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const favorites = await storage.getUserFavorites(userId);
       res.json(favorites);
     } catch (error) {
@@ -345,7 +335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/user/favorites", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const { podcastId } = req.body;
       
       if (!podcastId) {
@@ -364,7 +354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/user/favorites/:podcastId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const { podcastId } = req.params;
       
       await storage.removeUserFavorite(userId, podcastId);
@@ -377,7 +367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User notes endpoints
   app.get("/api/user/notes", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const notes = await storage.getUserNotes(userId);
       res.json(notes);
     } catch (error) {
@@ -387,7 +377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/user/notes/:podcastId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const { podcastId } = req.params;
       
       const note = await storage.getUserNoteForPodcast(userId, podcastId);
@@ -402,7 +392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/user/notes", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any).id;
       const noteData = insertUserNoteSchema.parse({
         ...req.body,
         userId,

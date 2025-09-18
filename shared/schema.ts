@@ -61,13 +61,16 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table (required for Replit Auth)
+// User storage table (traditional auth)
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  username: varchar("username").unique().notNull(),
+  password: varchar("password").notNull(),
   email: varchar("email").unique(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  isAdmin: boolean("is_admin").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -102,3 +105,44 @@ export const insertUserNoteSchema = createInsertSchema(userNotes).omit({
   createdAt: true,
   updatedAt: true,
 });
+
+// Authentication schemas
+export const registerUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  isAdmin: true,
+}).extend({
+  confirmPassword: z.string(),
+}).transform((data) => ({
+  // Trim inputs server-side before validation
+  username: data.username?.trim(),
+  password: data.password,
+  email: data.email?.trim(),
+  firstName: data.firstName?.trim(),
+  lastName: data.lastName?.trim(),
+  confirmPassword: data.confirmPassword,
+})).pipe(z.object({
+  // Username minimum length ≥ 3 characters
+  username: z.string().min(3, "Username must be at least 3 characters long"),
+  // Password minimum length ≥ 8 characters with complexity requirements
+  password: z.string()
+    .min(8, "Password must be at least 8 characters long")
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Password must contain at least one uppercase letter, one lowercase letter, and one number"),
+  // Email format validation
+  email: z.string().email("Please enter a valid email address").optional().or(z.literal("")),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  confirmPassword: z.string(),
+})).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+export const loginUserSchema = z.object({
+  username: z.string().min(1, "Username is required").transform(val => val.trim()),
+  password: z.string().min(1, "Password is required"),
+});
+
+export type RegisterUser = z.infer<typeof registerUserSchema>;
+export type LoginUser = z.infer<typeof loginUserSchema>;

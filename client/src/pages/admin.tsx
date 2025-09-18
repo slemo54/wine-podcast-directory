@@ -52,14 +52,14 @@ export default function Admin() {
   const [searchFilters, setSearchFilters] = useState<SearchFiltersType>({});
   const [editingPodcast, setEditingPodcast] = useState<Podcast | null>(null);
   const [deletingPodcast, setDeletingPodcast] = useState<Podcast | null>(null);
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
-  // Redirect if not authenticated
+  // Redirect if not authenticated (fallback, should be handled by ProtectedRoute)
   useEffect(() => {
     if (!isAuthenticated) {
-      window.location.href = "/api/login";
+      window.location.href = "/auth";
     }
   }, [isAuthenticated]);
 
@@ -214,7 +214,7 @@ export default function Admin() {
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
           <p className="text-muted-foreground mb-4">Please sign in to access the admin panel.</p>
-          <Button onClick={() => window.location.href = "/api/login"} data-testid="button-login">
+          <Button onClick={() => window.location.href = "/auth"} data-testid="button-login">
             Sign In
           </Button>
         </div>

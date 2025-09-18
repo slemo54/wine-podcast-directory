@@ -15,7 +15,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<"discover" | "favorites" | "notes" | "import">("discover");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchFilters, setSearchFilters] = useState<SearchFiltersType>({});
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
 
   // Main podcasts query
   const { data: podcasts = [], isLoading } = useQuery<Podcast[]>({
@@ -45,16 +45,16 @@ export default function Home() {
   }, []);
 
   const handleTabChange = (tab: "discover" | "favorites" | "notes" | "import") => {
-    // Redirect to login if trying to access personal features while unauthenticated
+    // Redirect to auth page if trying to access personal features while unauthenticated
     if (!isAuthenticated && tab !== "discover") {
-      window.location.href = "/api/login";
+      window.location.href = "/auth";
       return;
     }
     setActiveTab(tab);
   };
 
-  const handleLogout = () => {
-    window.location.href = "/api/logout";
+  const handleLogout = async () => {
+    await logout();
   };
 
   const getUserDisplayName = () => {
@@ -120,7 +120,7 @@ export default function Home() {
               ) : (
                 <Button
                   variant="secondary"
-                  onClick={() => window.location.href = "/api/login"}
+                  onClick={() => window.location.href = "/auth"}
                   data-testid="button-login"
                   className="bg-white/10 hover:bg-white/20 text-white border-white/20"
                 >

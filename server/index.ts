@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { seedAdminUser } from "./auth";
 
 const app = express();
 app.use(express.json());
@@ -37,7 +38,24 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Production environment variable checks - fail fast if required env vars are missing
+  if (process.env.NODE_ENV === 'production') {
+    const requiredEnvVars = ['SESSION_SECRET', 'DATABASE_URL'];
+    const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+    
+    if (missingVars.length > 0) {
+      console.error(`PRODUCTION DEPLOYMENT FAILED: Missing required environment variables: ${missingVars.join(', ')}`);
+      console.error('Please ensure all required environment variables are set before deploying to production.');
+      process.exit(1);
+    }
+    
+    console.log('✓ All required production environment variables are present');
+  }
+
   const server = await registerRoutes(app);
+  
+  // Seed admin user after routes are set up
+  await seedAdminUser();
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
