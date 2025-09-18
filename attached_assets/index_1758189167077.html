@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wine Podcast Directory 2025</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1><i class="fas fa-wine-glass"></i> Wine Podcast Directory 2025</h1>
+                <p class="subtitle">Advanced Search & Discovery Platform for Wine Podcasts</p>
+            </div>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-number" id="totalPodcasts">0</span>
+                    <span class="stat-label">Total Podcasts</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="activePodcasts">0</span>
+                    <span class="stat-label">Active</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="countriesCount">0</span>
+                    <span class="stat-label">Countries</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="languagesCount">0</span>
+                    <span class="stat-label">Languages</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="nav-tabs">
+        <div class="container">
+            <button class="tab-btn active" data-tab="directory">
+                <i class="fas fa-search"></i> Directory & Search
+            </button>
+            <button class="tab-btn" data-tab="favorites">
+                <i class="fas fa-heart"></i> Favorites
+            </button>
+        </div>
+    </nav>
+
+    <main class="main">
+        <!-- DIRECTORY & SEARCH TAB -->
+        <div id="directory" class="tab-content active">
+            <div class="container">
+                <!-- Compact Search & Filters -->
+                <div class="search-section">
+                    <div class="compact-search-bar">
+                        <div class="search-input-group">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="searchInput" placeholder="Search podcasts by name, host, keywords...">
+                            <button id="clearSearch" class="clear-btn"><i class="fas fa-times"></i></button>
+                        </div>
+
+                        <div class="inline-filter">
+                            <label for="durationFilter">Length:</label>
+                            <select id="durationFilter">
+                                <option value="">All</option>
+                                <option value="Under 10 minutes">Under 10min</option>
+                                <option value="10-20 minutes">10-20min</option>
+                                <option value="20-40 minutes">20-40min</option>
+                                <option value="40+ minutes">40min+</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Category Filter Pills -->
+                    <div class="category-filters">
+                        <span class="filter-label">Categories:</span>
+                        <div class="category-pills" id="categoryPills">
+                            <!-- Category buttons will be dynamically inserted here -->
+                        </div>
+                        <button id="clearCategories" class="clear-categories-btn">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                    </div>
+
+                    <div class="search-results-info">
+                        <span class="results-count">Results: <span id="resultsCount">0</span></span>
+                        <button id="clearAllFilters" class="clear-all-btn">
+                            <i class="fas fa-eraser"></i> Clear All Filters
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sorting -->
+                <div class="sort-section">
+                    <label>Sort by:</label>
+                    <select id="sortBy">
+                        <option value="title">Name A-Z</option>
+                        <option value="title-desc">Name Z-A</option>
+                        <option value="year">Launch Year</option>
+                        <option value="year-desc">Launch Year (Recent)</option>
+                        <option value="episodes">Episode Count</option>
+                        <option value="episodes-desc">Episode Count (Most)</option>
+                        <option value="country">Country</option>
+                    </select>
+                </div>
+
+                <!-- Results -->
+                <div class="results-section">
+                    <div id="podcastGrid" class="podcast-grid">
+                        <!-- Podcasts will be inserted here dynamically -->
+                    </div>
+                    
+                    <div id="loadingSpinner" class="loading">
+                        <i class="fas fa-spinner fa-spin"></i> Loading...
+                    </div>
+                    
+                    <div id="noResults" class="no-results" style="display: none;">
+                        <i class="fas fa-search"></i>
+                        <h3>No results found</h3>
+                        <p>Try adjusting your filters or search terms</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAVORITES TAB -->
+        <div id="favorites" class="tab-content">
+            <div class="container">
+                <h2><i class="fas fa-heart"></i> Your Favorite Podcasts</h2>
+                <div id="favoritesGrid" class="podcast-grid">
+                    <div class="empty-favorites">
+                        <i class="fas fa-heart-broken"></i>
+                        <h3>No favorites yet</h3>
+                        <p>Add podcasts to favorites by clicking the heart icon on podcast cards</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for Podcast Details -->
+    <div id="podcastModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modalContent">
+                <!-- Modal content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Notes -->
+    <div id="notesModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Private Notes</h3>
+            <textarea id="notesTextarea" placeholder="Add your private notes about this podcast..."></textarea>
+            <div class="modal-actions">
+                <button id="saveNotes" class="btn-primary">Save Notes</button>
+                <button id="cancelNotes" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="podcasts-data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

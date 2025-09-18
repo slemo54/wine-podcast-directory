@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wine Podcast Directory 2025 - Simplified Test</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1><i class="fas fa-wine-glass"></i> Wine Podcast Directory 2025</h1>
+                <p class="subtitle">Simplified Interface Test - Advanced Search & Discovery Platform</p>
+            </div>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-number" id="totalPodcasts">250</span>
+                    <span class="stat-label">Total Podcasts</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="activePodcasts">180</span>
+                    <span class="stat-label">Active</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="countriesCount">25</span>
+                    <span class="stat-label">Countries</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="languagesCount">8</span>
+                    <span class="stat-label">Languages</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="nav-tabs">
+        <div class="container">
+            <button class="tab-btn active" data-tab="directory">
+                <i class="fas fa-search"></i> Directory & Search
+            </button>
+            <button class="tab-btn" data-tab="favorites">
+                <i class="fas fa-heart"></i> Favorites
+            </button>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            <!-- Compact Search & Filters -->
+            <div class="search-section">
+                <div class="compact-search-bar">
+                    <div class="search-input-group">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Search podcasts by name, host, keywords...">
+                        <button id="clearSearch" class="clear-btn"><i class="fas fa-times"></i></button>
+                    </div>
+
+                    <div class="inline-filter">
+                        <label for="durationFilter">Length:</label>
+                        <select id="durationFilter">
+                            <option value="">All</option>
+                            <option value="Under 10 minutes">Under 10min</option>
+                            <option value="10-20 minutes">10-20min</option>
+                            <option value="20-40 minutes">20-40min</option>
+                            <option value="40+ minutes">40min+</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Category Filter Pills -->
+                <div class="category-filters">
+                    <span class="filter-label">Categories:</span>
+                    <div class="category-pills" id="categoryPills">
+                        <button class="category-pill" data-category="Wine Business">Wine Business</button>
+                        <button class="category-pill active" data-category="Education">Education</button>
+                        <button class="category-pill" data-category="Italian Wine">Italian Wine</button>
+                        <button class="category-pill" data-category="Natural Wine">Natural Wine</button>
+                        <button class="category-pill" data-category="Sustainability">Sustainability</button>
+                        <button class="category-pill" data-category="Wine Travel">Wine Travel</button>
+                        <button class="category-pill" data-category="Sommelier">Sommelier</button>
+                    </div>
+                    <button id="clearCategories" class="clear-categories-btn">
+                        <i class="fas fa-times"></i> Clear
+                    </button>
+                </div>
+
+                <div class="search-results-info">
+                    <span class="results-count">Results: <span id="resultsCount">42</span></span>
+                    <button id="clearAllFilters" class="clear-all-btn">
+                        <i class="fas fa-eraser"></i> Clear All Filters
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sorting -->
+            <div class="sort-section">
+                <label>Sort by:</label>
+                <select id="sortBy">
+                    <option value="title">Name A-Z</option>
+                    <option value="title-desc">Name Z-A</option>
+                    <option value="year">Launch Year</option>
+                    <option value="year-desc">Launch Year (Recent)</option>
+                    <option value="episodes">Episode Count</option>
+                    <option value="episodes-desc">Episode Count (Most)</option>
+                    <option value="country">Country</option>
+                </select>
+            </div>
+
+            <div style="margin: 2rem 0; padding: 2rem; background: #f8f9fa; border-radius: 12px; text-align: center;">
+                <h3 style="color: #722f37; margin-bottom: 1rem;">
+                    <i class="fas fa-check-circle"></i> Simplified Interface Test
+                </h3>
+                <p style="color: #666; margin-bottom: 1rem;">
+                    This is a test of the new simplified interface with:
+                </p>
+                <ul style="list-style: none; margin: 0; padding: 0; color: #333;">
+                    <li style="margin: 0.5rem 0;"><i class="fas fa-check" style="color: #28a745; margin-right: 0.5rem;"></i> Compact search bar with inline episode length filter</li>
+                    <li style="margin: 0.5rem 0;"><i class="fas fa-check" style="color: #28a745; margin-right: 0.5rem;"></i> Category filter pills instead of dropdowns</li>
+                    <li style="margin: 0.5rem 0;"><i class="fas fa-check" style="color: #28a745; margin-right: 0.5rem;"></i> Streamlined controls and modern design</li>
+                    <li style="margin: 0.5rem 0;"><i class="fas fa-check" style="color: #28a745; margin-right: 0.5rem;"></i> Mobile-friendly responsive layout</li>
+                </ul>
+                <p style="color: #666; margin-top: 1rem; font-size: 0.9rem;">
+                    Original complex filters with Country, Language, Target Audience, Frequency, Status, and Format have been removed.
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Simple test script to demonstrate functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Category pill interactions
+            document.querySelectorAll('.category-pill').forEach(pill => {
+                pill.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    updateResultsCount();
+                });
+            });
+
+            // Clear categories
+            document.getElementById('clearCategories').addEventListener('click', function() {
+                document.querySelectorAll('.category-pill').forEach(pill => {
+                    pill.classList.remove('active');
+                });
+                updateResultsCount();
+            });
+
+            // Clear all filters
+            document.getElementById('clearAllFilters').addEventListener('click', function() {
+                document.getElementById('searchInput').value = '';
+                document.getElementById('durationFilter').selectedIndex = 0;
+                document.querySelectorAll('.category-pill').forEach(pill => {
+                    pill.classList.remove('active');
+                });
+                updateResultsCount();
+            });
+
+            // Search input
+            document.getElementById('searchInput').addEventListener('input', updateResultsCount);
+
+            // Duration filter
+            document.getElementById('durationFilter').addEventListener('change', updateResultsCount);
+
+            // Clear search
+            document.getElementById('clearSearch').addEventListener('click', function() {
+                document.getElementById('searchInput').value = '';
+                updateResultsCount();
+            });
+
+            function updateResultsCount() {
+                const searchTerm = document.getElementById('searchInput').value;
+                const duration = document.getElementById('durationFilter').value;
+                const activeCategories = document.querySelectorAll('.category-pill.active').length;
+
+                // Simulate filter count
+                let count = 250;
+                if (searchTerm) count = Math.max(5, Math.floor(count * 0.3));
+                if (duration) count = Math.floor(count * 0.6);
+                if (activeCategories > 0) count = Math.floor(count * (0.8 - activeCategories * 0.1));
+
+                document.getElementById('resultsCount').textContent = Math.max(0, count);
+            }
+        });
+    </script>
+</body>
+</html>

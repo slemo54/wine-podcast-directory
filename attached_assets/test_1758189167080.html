@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wine Podcast Directory - Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .status.info { background: #d1ecf1; color: #0c5460; border: 1px solid #b8daff; }
+        .test-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .test-list li {
+            padding: 5px 0;
+        }
+        .test-list li::before {
+            content: "✓ ";
+            color: #28a745;
+            font-weight: bold;
+        }
+        button {
+            background: #722f37;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #8b1538;
+        }
+    </style>
+</head>
+<body>
+    <h1>🍷 Wine Podcast Directory - Test Page</h1>
+
+    <div class="test-section">
+        <h2>✅ Improvements Made</h2>
+        <ul class="test-list">
+            <li>Fixed multi-select filters not working properly</li>
+            <li>Fixed Clear All button preventing further searches</li>
+            <li>Added real-time filtering on all filter controls</li>
+            <li>Improved multi-select dropdown styling</li>
+            <li>Added visual notifications for user feedback</li>
+            <li>Better error handling for empty/null values</li>
+            <li>Enhanced text search with partial matching</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Manual Testing Instructions</h2>
+        <ol>
+            <li><strong>Open the main app:</strong>
+                <button onclick="window.open('index.html', '_blank')">Open Wine Podcast Directory</button>
+            </li>
+            <li><strong>Test Filters:</strong>
+                <ul>
+                    <li>Try selecting multiple countries (hold Ctrl/Cmd to multi-select)</li>
+                    <li>Test different categories, languages, audiences</li>
+                    <li>Combine multiple filters together</li>
+                    <li>Watch results update in real-time</li>
+                </ul>
+            </li>
+            <li><strong>Test Clear All Button:</strong>
+                <ul>
+                    <li>Apply several filters</li>
+                    <li>Click "Clear All" button</li>
+                    <li>Verify all filters are reset</li>
+                    <li>Verify you can search/filter again after clearing</li>
+                    <li>Look for notification confirming filters cleared</li>
+                </ul>
+            </li>
+            <li><strong>Test Search:</strong>
+                <ul>
+                    <li>Try searching for "Italian", "business", "education"</li>
+                    <li>Test partial matches and keywords</li>
+                    <li>Combine search with filters</li>
+                    <li>Test quick search buttons</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>🛠️ Technical Changes Summary</h2>
+        <div class="status info">
+            <strong>Files Modified:</strong>
+            <ul>
+                <li><code>script.js</code> - Fixed filter logic and Clear All function</li>
+                <li><code>styles.css</code> - Added multi-select and notification styles</li>
+            </ul>
+        </div>
+
+        <h3>Key Code Changes:</h3>
+        <ul>
+            <li><strong>clearFilters() function:</strong> Now properly clears multi-select dropdowns</li>
+            <li><strong>applyFilters() function:</strong> Improved handling of multi-select values</li>
+            <li><strong>Event listeners:</strong> Added real-time filtering to all controls</li>
+            <li><strong>Multi-select styling:</strong> Better visual feedback for selected options</li>
+            <li><strong>Notification system:</strong> User feedback when actions are performed</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Expected Behavior</h2>
+        <div class="status success">
+            <strong>✅ What should work now:</strong>
+            <ul>
+                <li>Multi-select filters work properly (Country, Language, Audience, Categories)</li>
+                <li>Clear All button resets everything and allows new searches</li>
+                <li>Real-time filtering as you make selections</li>
+                <li>Visual feedback through notifications</li>
+                <li>Improved search functionality</li>
+                <li>Better multi-select UI with visual selection feedback</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Test Scenarios</h2>
+        <p><strong>Scenario 1:</strong> Multi-Country Filter</p>
+        <ol>
+            <li>Open Advanced Filters</li>
+            <li>Select "Italy" and "United States" from Country filter</li>
+            <li>Verify only podcasts from those countries show</li>
+        </ol>
+
+        <p><strong>Scenario 2:</strong> Clear All & Re-filter</p>
+        <ol>
+            <li>Apply multiple filters (Country + Category + Search term)</li>
+            <li>Click "Clear All"</li>
+            <li>Verify notification appears</li>
+            <li>Apply new filters to confirm functionality restored</li>
+        </ol>
+
+        <p><strong>Scenario 3:</strong> Real-time Filtering</p>
+        <ol>
+            <li>Change any filter dropdown</li>
+            <li>Verify results update immediately (no need to click Apply)</li>
+        </ol>
+    </div>
+
+    <script>
+        // Add some interactive elements for testing
+        function createTestReport() {
+            alert('Open the developer console and check for any JavaScript errors while testing the filters.');
+        }
+    </script>
+
+    <div class="test-section">
+        <button onclick="createTestReport()">Check Console for Errors</button>
+        <button onclick="window.open('index.html', '_blank')">Launch Wine Podcast Directory</button>
+    </div>
+
+</body>
+</html>
