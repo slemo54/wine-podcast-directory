@@ -108,6 +108,12 @@ export function PodcastCard({ podcast, viewMode = "grid" }: PodcastCardProps) {
   });
 
   const handleFavoriteToggle = () => {
+    // Redirect to login if user is not authenticated
+    if (!isAuthenticated) {
+      window.location.href = "/api/login";
+      return;
+    }
+    
     if (isFavorited) {
       removeFavoriteMutation.mutate();
     } else {
@@ -152,23 +158,21 @@ export function PodcastCard({ podcast, viewMode = "grid" }: PodcastCardProps) {
               <h3 className="font-semibold text-lg mb-1">{podcast.title}</h3>
               <p className="text-sm text-muted-foreground">{podcast.host}</p>
             </div>
-            {isAuthenticated && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleFavoriteToggle}
-                disabled={addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
-                data-testid={`button-favorite-${podcast.id}`}
-                className="flex items-center gap-2"
-              >
-                <Heart 
-                  className={`w-4 h-4 ${isFavorited ? "fill-red-500 text-red-500" : "text-muted-foreground"}`}
-                />
-                <span className="hidden md:inline">
-                  {isFavorited ? "Remove from favorites" : "Add to favorites"}
-                </span>
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleFavoriteToggle}
+              disabled={isAuthenticated && (addFavoriteMutation.isPending || removeFavoriteMutation.isPending)}
+              data-testid={`button-favorite-${podcast.id}`}
+              className="flex items-center gap-2"
+            >
+              <Heart 
+                className={`w-4 h-4 ${isAuthenticated && isFavorited ? "fill-red-500 text-red-500" : "text-muted-foreground"}`}
+              />
+              <span className="hidden md:inline">
+                {isAuthenticated ? (isFavorited ? "Remove from favorites" : "Add to favorites") : "Sign in to favorite"}
+              </span>
+            </Button>
           </div>
 
           <div className="flex flex-wrap gap-4 text-sm mb-3">
@@ -233,22 +237,20 @@ export function PodcastCard({ podcast, viewMode = "grid" }: PodcastCardProps) {
             <span className="text-xs font-medium">{podcast.status}</span>
           </div>
         </div>
-        {isAuthenticated && (
-          <div className="absolute top-4 right-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleFavoriteToggle}
-              disabled={addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
-              data-testid={`button-favorite-${podcast.id}`}
-              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border-0"
-            >
-              <Heart 
-                className={`w-4 h-4 ${isFavorited ? "fill-red-500 text-red-500" : "text-white"}`}
-              />
-            </Button>
-          </div>
-        )}
+        <div className="absolute top-4 right-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleFavoriteToggle}
+            disabled={isAuthenticated && (addFavoriteMutation.isPending || removeFavoriteMutation.isPending)}
+            data-testid={`button-favorite-${podcast.id}`}
+            className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border-0"
+          >
+            <Heart 
+              className={`w-4 h-4 ${isAuthenticated && isFavorited ? "fill-red-500 text-red-500" : "text-white"}`}
+            />
+          </Button>
+        </div>
       </div>
 
       <div className="p-5">

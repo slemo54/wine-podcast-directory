@@ -6,7 +6,7 @@ import { CSVImport } from "@/components/csv-import";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Grid, List, Search, Upload, Heart, FileText, LogOut, User as UserIcon } from "lucide-react";
+import { Grid, List, Search, Upload, Heart, FileText, LogOut, User as UserIcon, LogIn } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Podcast, SearchFilters as SearchFiltersType, UserFavorite, User } from "@shared/schema";
 
@@ -14,7 +14,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<"discover" | "favorites" | "notes" | "import">("discover");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchFilters, setSearchFilters] = useState<SearchFiltersType>({});
-  const { user } = useAuth() as { user: User | null };
+  const { user, isAuthenticated } = useAuth();
 
   // Main podcasts query
   const { data: podcasts = [], isLoading } = useQuery<Podcast[]>({
@@ -25,7 +25,7 @@ export default function Home() {
   // User favorites query
   const { data: userFavorites = [] } = useQuery<UserFavorite[]>({
     queryKey: ["/api/user/favorites"],
-    enabled: activeTab === "favorites",
+    enabled: isAuthenticated && activeTab === "favorites",
   });
 
   // Favorite podcast IDs for quick lookup
@@ -35,7 +35,7 @@ export default function Home() {
   const { data: favoritePodcasts = [] } = useQuery<Podcast[]>({
     queryKey: ["/api/podcasts", {}],
     select: (data) => data.filter(podcast => favoriteIds.has(podcast.id)),
-    enabled: activeTab === "favorites" && userFavorites.length > 0,
+    enabled: isAuthenticated && activeTab === "favorites" && userFavorites.length > 0,
   });
 
   const handleFilterChange = (filters: SearchFiltersType) => {
@@ -43,6 +43,11 @@ export default function Home() {
   };
 
   const handleTabChange = (tab: "discover" | "favorites" | "notes" | "import") => {
+    // Redirect to login if trying to access personal features while unauthenticated
+    if (!isAuthenticated && tab !== "discover") {
+      window.location.href = "/api/login";
+      return;
+    }
     setActiveTab(tab);
   };
 
@@ -78,31 +83,43 @@ export default function Home() {
               </p>
             </div>
             
-            {/* User Navigation */}
+            {/* Navigation - User Menu or Login Button */}
             <div className="flex items-center gap-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="text-white hover:bg-white/10 p-2" data-testid="button-user-menu">
-                    <Avatar className="w-8 h-8 mr-2">
-                      <AvatarImage src={user?.profileImageUrl} />
-                      <AvatarFallback className="text-wine-dark">
-                        {getUserDisplayName().charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="hidden md:inline">{getUserDisplayName()}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem disabled>
-                    <UserIcon className="mr-2 h-4 w-4" />
-                    <span data-testid="text-user-email">{user?.email}</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleLogout} data-testid="button-logout">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Sign Out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {isAuthenticated ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="text-white hover:bg-white/10 p-2" data-testid="button-user-menu">
+                      <Avatar className="w-8 h-8 mr-2">
+                        <AvatarImage src={user?.profileImageUrl} />
+                        <AvatarFallback className="text-wine-dark">
+                          {getUserDisplayName().charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="hidden md:inline">{getUserDisplayName()}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem disabled>
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      <span data-testid="text-user-email">{user?.email}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleLogout} data-testid="button-logout">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Sign Out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button
+                  variant="secondary"
+                  onClick={() => window.location.href = "/api/login"}
+                  data-testid="button-login"
+                  className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+                >
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -126,42 +143,46 @@ export default function Home() {
               <Search className="w-4 h-4" />
               <span>Discover</span>
             </button>
-            <button 
-              className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
-                activeTab === "favorites" 
-                  ? "border-primary text-primary" 
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => handleTabChange("favorites")}
-              data-testid="tab-favorites"
-            >
-              <Heart className="w-4 h-4" />
-              <span>Favorites ({userFavorites.length})</span>
-            </button>
-            <button 
-              className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
-                activeTab === "notes" 
-                  ? "border-primary text-primary" 
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => handleTabChange("notes")}
-              data-testid="tab-notes"
-            >
-              <FileText className="w-4 h-4" />
-              <span>Notes</span>
-            </button>
-            <button 
-              className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
-                activeTab === "import" 
-                  ? "border-primary text-primary" 
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-              onClick={() => handleTabChange("import")}
-              data-testid="tab-import"
-            >
-              <Upload className="w-4 h-4" />
-              <span>Import CSV</span>
-            </button>
+            {isAuthenticated && (
+              <>
+                <button 
+                  className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+                    activeTab === "favorites" 
+                      ? "border-primary text-primary" 
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                  onClick={() => handleTabChange("favorites")}
+                  data-testid="tab-favorites"
+                >
+                  <Heart className="w-4 h-4" />
+                  <span>Favorites ({userFavorites.length})</span>
+                </button>
+                <button 
+                  className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+                    activeTab === "notes" 
+                      ? "border-primary text-primary" 
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                  onClick={() => handleTabChange("notes")}
+                  data-testid="tab-notes"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Notes</span>
+                </button>
+                <button 
+                  className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+                    activeTab === "import" 
+                      ? "border-primary text-primary" 
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                  onClick={() => handleTabChange("import")}
+                  data-testid="tab-import"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>Import CSV</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </nav>
