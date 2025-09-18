@@ -2,22 +2,28 @@ import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Upload, CheckCircle, AlertCircle } from "lucide-react";
+import { FileText, Upload, CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
 
 interface ImportResult {
   success: boolean;
   imported: number;
+  duplicatesSkipped: number;
+  updated: number;
   errors: number;
   errorMessages: string[];
   totalRows?: number;
   headers?: string[];
   podcasts?: any[];
+  updatedPodcasts?: any[];
+  overwriteMode?: boolean;
 }
 
 export function CSVImport() {
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [overwriteDuplicates, setOverwriteDuplicates] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -27,7 +33,12 @@ export function CSVImport() {
       const formData = new FormData();
       formData.append('csvFile', file);
       
-      const response = await fetch('/api/podcasts/import', {
+      const url = new URL('/api/podcasts/import', window.location.origin);
+      if (overwriteDuplicates) {
+        url.searchParams.append('overwrite', 'true');
+      }
+      
+      const response = await fetch(url.toString(), {
         method: 'POST',
         body: formData,
       });
@@ -42,9 +53,20 @@ export function CSVImport() {
       queryClient.invalidateQueries({ queryKey: ["/api/podcasts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
       
+      let description = `${data.imported} new podcasts imported.`;
+      if (data.duplicatesSkipped > 0) {
+        description += ` ${data.duplicatesSkipped} duplicates skipped.`;
+      }
+      if (data.updated > 0) {
+        description += ` ${data.updated} existing podcasts updated.`;
+      }
+      if (data.errors > 0) {
+        description += ` ${data.errors} rows had errors.`;
+      }
+      
       toast({
-        title: "Import Successful!",
-        description: `${data.imported} podcasts imported successfully. ${data.errors > 0 ? `${data.errors} rows had errors.` : ''}`,
+        title: "Import Completed!",
+        description,
       });
       
       setFile(null);
@@ -147,9 +169,28 @@ export function CSVImport() {
           </Button>
         </div>
 
-        {/* Selected File */}
+        {/* Overwrite Option */}
         {file && (
-          <div className="bg-muted rounded-lg p-4 mb-6">
+          <div className="bg-muted rounded-lg p-4 mb-4">
+            <div className="flex items-center space-x-3 mb-3">
+              <Checkbox
+                id="overwrite-duplicates"
+                checked={overwriteDuplicates}
+                onCheckedChange={(checked) => setOverwriteDuplicates(checked as boolean)}
+                data-testid="checkbox-overwrite-duplicates"
+              />
+              <label
+                htmlFor="overwrite-duplicates"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Update existing podcasts with same title and host
+              </label>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              {overwriteDuplicates 
+                ? "Existing podcasts will be updated with new data from the CSV" 
+                : "Duplicate podcasts will be skipped during import"}
+            </p>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-primary" />
@@ -162,7 +203,9 @@ export function CSVImport() {
                 onClick={handleImport}
                 disabled={importMutation.isPending}
                 data-testid="button-import-csv"
+                className="flex items-center gap-2"
               >
+                {overwriteDuplicates && <RefreshCw className="w-4 h-4" />}
                 {importMutation.isPending ? "Importing..." : "Import CSV"}
               </Button>
             </div>
@@ -205,9 +248,18 @@ export function CSVImport() {
               importMutation.data.imported > 0 ? 'text-green-700' : 'text-orange-700'
             }`}>
               <p>• Total rows processed: {importMutation.data.totalRows || 0}</p>
-              <p>• Podcasts imported: {importMutation.data.imported}</p>
+              <p>• New podcasts imported: {importMutation.data.imported}</p>
+              {importMutation.data.duplicatesSkipped > 0 && (
+                <p>• Duplicates skipped: {importMutation.data.duplicatesSkipped}</p>
+              )}
+              {importMutation.data.updated > 0 && (
+                <p>• Existing podcasts updated: {importMutation.data.updated}</p>
+              )}
               {importMutation.data.errors > 0 && (
                 <p>• Rows with errors: {importMutation.data.errors}</p>
+              )}
+              {importMutation.data.overwriteMode && (
+                <p className="text-xs mt-1 opacity-75">• Overwrite mode was enabled</p>
               )}
             </div>
 

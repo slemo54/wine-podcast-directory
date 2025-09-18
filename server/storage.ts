@@ -16,6 +16,24 @@ import {
 import { db } from "./db";
 import { eq, ilike, or, and, inArray, desc, asc, sql } from "drizzle-orm";
 
+// Utility function to normalize title and host for duplicate detection
+export function createDeduplicationKey(title: string, host: string): string {
+  const normalize = (str: string) => {
+    return str
+      .toLowerCase()
+      .trim()
+      // Remove extra spaces
+      .replace(/\s+/g, ' ')
+      // Remove common punctuation
+      .replace(/[,.!?;:"'()\[\]{}]/g, '')
+      // Remove "the", "a", "an" articles
+      .replace(/^(the|a|an)\s+/i, '')
+      .trim();
+  };
+  
+  return `${normalize(title)}|||${normalize(host)}`;
+}
+
 export interface IStorage {
   // Podcast management
   createPodcast(podcast: InsertPodcast): Promise<Podcast>;
@@ -23,6 +41,8 @@ export interface IStorage {
   getPodcastById(id: string): Promise<Podcast | undefined>;
   searchPodcasts(filters: SearchFilters): Promise<Podcast[]>;
   bulkCreatePodcasts(podcasts: InsertPodcast[]): Promise<Podcast[]>;
+  findPodcastsByTitleHost(titleHostPairs: Array<{title: string, host: string}>): Promise<Podcast[]>;
+  updatePodcast(id: string, podcast: InsertPodcast): Promise<Podcast | undefined>;
   
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
@@ -129,6 +149,42 @@ export class DatabaseStorage implements IStorage {
       .insert(podcasts)
       .values(insertPodcasts as any)
       .returning();
+  }
+
+  async findPodcastsByTitleHost(titleHostPairs: Array<{title: string, host: string}>): Promise<Podcast[]> {
+    if (titleHostPairs.length === 0) {
+      return [];
+    }
+
+    // Get all existing podcasts to check against
+    const existingPodcasts = await db.select().from(podcasts);
+    
+    // Create a map of deduplication keys for the input pairs
+    const inputKeys = new Set(
+      titleHostPairs.map(pair => createDeduplicationKey(pair.title, pair.host))
+    );
+    
+    // Filter existing podcasts that match any of the input keys
+    const duplicates = existingPodcasts.filter(podcast => {
+      const existingKey = createDeduplicationKey(podcast.title, podcast.host);
+      return inputKeys.has(existingKey);
+    });
+    
+    return duplicates;
+  }
+
+  async updatePodcast(id: string, insertPodcast: InsertPodcast): Promise<Podcast | undefined> {
+    try {
+      const [podcast] = await db
+        .update(podcasts)
+        .set(insertPodcast as any)
+        .where(eq(podcasts.id, id))
+        .returning();
+      return podcast || undefined;
+    } catch (error) {
+      console.error('Failed to update podcast:', error);
+      return undefined;
+    }
   }
 
   // User operations (required for Replit Auth)

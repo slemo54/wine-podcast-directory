@@ -3,8 +3,8 @@ import { createServer, type Server } from "http";
 import multer from "multer";
 import csvParser from "csv-parser";
 import { Readable } from "stream";
-import { storage } from "./storage";
-import { insertPodcastSchema, insertUserNoteSchema, searchFiltersSchema, type InsertPodcast } from "@shared/schema";
+import { storage, createDeduplicationKey } from "./storage";
+import { insertPodcastSchema, insertUserNoteSchema, searchFiltersSchema, type InsertPodcast, type Podcast } from "@shared/schema";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { z } from "zod";
 
@@ -86,6 +86,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.file) {
         return res.status(400).json({ message: "No CSV file provided" });
       }
+
+      // Get overwrite flag from query parameters
+      const overwriteDuplicates = req.query.overwrite === 'true';
 
       const podcasts: InsertPodcast[] = [];
       const errors: string[] = [];
@@ -228,17 +231,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Processing complete. Valid podcasts: ${podcasts.length}, Errors: ${errors.length}`);
       
-      // Bulk insert valid podcasts
-      const createdPodcasts = await storage.bulkCreatePodcasts(podcasts);
+      // Check for duplicates before insertion
+      const titleHostPairs = podcasts.map(p => ({ title: p.title, host: p.host }));
+      const existingPodcasts = await storage.findPodcastsByTitleHost(titleHostPairs);
+      
+      // Create a map of existing podcasts by deduplication key
+      const existingMap = new Map<string, string>();
+      existingPodcasts.forEach(podcast => {
+        const key = createDeduplicationKey(podcast.title, podcast.host);
+        existingMap.set(key, podcast.id);
+      });
+      
+      // Separate new podcasts from duplicates
+      const newPodcasts: InsertPodcast[] = [];
+      const duplicatesSkipped: InsertPodcast[] = [];
+      const podcastsToUpdate: Array<{podcast: InsertPodcast, existingId: string}> = [];
+      
+      podcasts.forEach((podcast, index) => {
+        const key = createDeduplicationKey(podcast.title, podcast.host);
+        const existingId = existingMap.get(key);
+        
+        if (existingId) {
+          if (overwriteDuplicates) {
+            podcastsToUpdate.push({ podcast, existingId });
+          } else {
+            duplicatesSkipped.push(podcast);
+          }
+        } else {
+          newPodcasts.push(podcast);
+        }
+      });
+      
+      // Insert new podcasts
+      const createdPodcasts = await storage.bulkCreatePodcasts(newPodcasts);
+      
+      // Update existing podcasts if overwrite is enabled
+      const updatedPodcasts: Podcast[] = [];
+      if (overwriteDuplicates && podcastsToUpdate.length > 0) {
+        for (const { podcast, existingId } of podcastsToUpdate) {
+          // Update each podcast individually
+          const updated = await storage.updatePodcast(existingId, podcast);
+          if (updated) updatedPodcasts.push(updated);
+        }
+      }
 
       res.json({
         success: true,
         imported: createdPodcasts.length,
+        duplicatesSkipped: duplicatesSkipped.length,
+        updated: updatedPodcasts.length,
         errors: errors.length,
         errorMessages: errors.slice(0, 20), // Return first 20 errors
         totalRows: rowNumber,
         headers: headers,
-        podcasts: createdPodcasts
+        podcasts: createdPodcasts,
+        updatedPodcasts: updatedPodcasts,
+        overwriteMode: overwriteDuplicates
       });
     } catch (error) {
       console.error('CSV import failed:', error);
