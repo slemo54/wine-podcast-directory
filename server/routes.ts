@@ -115,7 +115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const getColumnValue = (columnNames: string[]): string | undefined => {
                 for (const colName of columnNames) {
                   const exactMatch = row[colName];
-                  if (exactMatch !== undefined && exactMatch !== null && exactMatch !== '') {
+                  if (exactMatch !== undefined && exactMatch !== null && String(exactMatch).trim() !== '') {
                     return String(exactMatch).trim();
                   }
                   
@@ -123,7 +123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   const caseInsensitiveMatch = Object.keys(row).find(key => 
                     key.toLowerCase() === colName.toLowerCase()
                   );
-                  if (caseInsensitiveMatch && row[caseInsensitiveMatch]) {
+                  if (caseInsensitiveMatch && row[caseInsensitiveMatch] && String(row[caseInsensitiveMatch]).trim() !== '') {
                     return String(row[caseInsensitiveMatch]).trim();
                   }
                 }
@@ -144,18 +144,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
               ]);
               
               const language = getColumnValue([
-                'Primary Language(s)', 'language', 'Language', 'LANGUAGE', 'lang', 'languages',
+                'Primary Language(s) of the Podcast', 'Primary Language(s)', 'language', 'Language', 'LANGUAGE', 'lang', 'languages',
                 'Lingua', 'lingua', 'LINGUA', 'linguaggio', 'Linguaggio', 'idioma', 'idiomas',
                 'Primary Language', 'primary_language', 'main_language', 'podcast_language',
                 'spoken_language', 'audio_language'
-              ]);
+              ]) || 'English'; // Default fallback
               
               const yearStr = getColumnValue([
                 'Year Launched', 'year', 'Year', 'YEAR', 'launch_year', 'start_year'
               ]);
               
               const status = getColumnValue([
-                'Is currently active?', 'status', 'Status', 'STATUS', 'active', 'Active'
+                'Is the podcast currently active?', 'Is currently active?', 'status', 'Status', 'STATUS', 'active', 'Active'
               ]) || 'Active';
               
               const categoriesStr = getColumnValue([
@@ -163,32 +163,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
               ]) || '';
               
               const episodeLength = getColumnValue([
-                'Episode Length', 'episodeLength', 'episode_length', 'length', 'duration'
+                'Typical Episode Length', 'Episode Length', 'episodeLength', 'episode_length', 'length', 'duration'
               ]);
               
               const episodes = getColumnValue([
-                'Episodes', 'episodes', 'episode_count', 'total_episodes'
+                'Number of episodes of your podcast published to date', 'Episodes', 'episodes', 'episode_count', 'total_episodes'
               ]);
               
               const description = getColumnValue([
-                'Description', 'description', 'desc', 'about', 'summary'
+                'One-sentence description for the directory listing', 'Description', 'description', 'desc', 'about', 'summary'
               ]);
 
-              // Validate required fields with detailed info
+              // Validate required fields with detailed info - allow empty values with defaults
               if (!title) {
-                throw new Error(`Missing title. Available columns: ${Object.keys(row).join(', ')}`);
+                throw new Error(`Missing title. Row data: ${JSON.stringify(row)}`);
               }
               if (!host) {
-                throw new Error(`Missing host. Available columns: ${Object.keys(row).join(', ')}`);
+                throw new Error(`Missing host. Row data: ${JSON.stringify(row)}`);
               }
               if (!country) {
-                throw new Error(`Missing country. Available columns: ${Object.keys(row).join(', ')}`);
+                throw new Error(`Missing country. Row data: ${JSON.stringify(row)}`);
               }
-              if (!language) {
-                throw new Error(`Missing language field. Available columns: ${Object.keys(row).join(', ')}`);
-              }
+              // Language now has default, so we don't validate it as required
               if (!yearStr || isNaN(parseInt(yearStr))) {
-                throw new Error(`Missing or invalid year. Available columns: ${Object.keys(row).join(', ')}`);
+                throw new Error(`Missing or invalid year: '${yearStr}'. Row data: ${JSON.stringify(row)}`);
               }
 
               const podcastData: InsertPodcast = {
@@ -203,10 +201,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 episodes,
                 description,
                 socialLinks: {
-                  spotify: getColumnValue(['Spotify URL', 'spotify', 'Spotify', 'spotify_url']),
-                  instagram: getColumnValue(['Instagram URL', 'instagram', 'Instagram', 'instagram_url']),
-                  youtube: getColumnValue(['YouTube URL', 'youtube', 'Youtube', 'youtube_url']),
-                  website: getColumnValue(['Website URL', 'website', 'Website', 'site', 'url']),
+                  spotify: getColumnValue(['Spotify Link', 'Spotify URL', 'spotify', 'Spotify', 'spotify_url']),
+                  instagram: getColumnValue(['Instagram @', 'Instagram URL', 'instagram', 'Instagram', 'instagram_url']),
+                  youtube: getColumnValue(['YouTube Link', 'YouTube URL', 'youtube', 'Youtube', 'youtube_url']),
+                  website: getColumnValue(['Website', 'Website URL', 'website', 'site', 'url']),
                 }
               };
 
