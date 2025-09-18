@@ -11,22 +11,19 @@ interface SearchFiltersProps {
 }
 
 const EPISODE_LENGTHS = [
-  { value: "Under 10min", label: "Under 10min" },
-  { value: "10-20min", label: "10-20min" },
-  { value: "20-40min", label: "20-40min" },
+  { value: "Under 10 minutes", label: "Under 10 minutes" },
+  { value: "10-20 minutes", label: "10-20 minutes" },
+  { value: "20-40 minutes", label: "20-40 minutes" },
+  { value: "40+ minutes", label: "40+ minutes" },
   { value: "40min+", label: "40min+" },
 ];
 
 const CATEGORIES = [
   "Educational",
-  "Wine Business", 
-  "Regional",
+  "Eucational", // Typo in data - keeping both
   "Entertainment",
-  "Sustainability",
-  "Italian Wine",
-  "Natural Wine",
-  "Wine Travel",
-  "Sommelier",
+  "Regional",
+  "Wine Business",
 ];
 
 const SORT_OPTIONS = [
