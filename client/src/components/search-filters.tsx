@@ -55,7 +55,7 @@ export function SearchFilters({ onFiltersChange, resultsCount }: SearchFiltersPr
     };
 
     onFiltersChange(filters);
-  }, [searchQuery, episodeLength, selectedCategories, sortBy, onFiltersChange]);
+  }, [searchQuery, episodeLength, selectedCategories, sortBy]);
 
   const handleCategoryToggle = (category: string) => {
     setSelectedCategories(prev => 

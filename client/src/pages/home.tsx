@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { SearchFilters } from "@/components/search-filters";
 import { PodcastCard } from "@/components/podcast-card";
@@ -22,10 +22,10 @@ export default function Home() {
     enabled: activeTab === "discover",
   });
 
-  // User favorites query
+  // User favorites query - moved from individual cards to prevent duplicate queries
   const { data: userFavorites = [] } = useQuery<UserFavorite[]>({
     queryKey: ["/api/user/favorites"],
-    enabled: isAuthenticated && activeTab === "favorites",
+    enabled: isAuthenticated,
   });
 
   // Favorite podcast IDs for quick lookup
@@ -38,9 +38,10 @@ export default function Home() {
     enabled: isAuthenticated && activeTab === "favorites" && userFavorites.length > 0,
   });
 
-  const handleFilterChange = (filters: SearchFiltersType) => {
+  // Memoize the filter change handler to prevent unnecessary re-renders
+  const handleFilterChange = useCallback((filters: SearchFiltersType) => {
     setSearchFilters(filters);
-  };
+  }, []);
 
   const handleTabChange = (tab: "discover" | "favorites" | "notes" | "import") => {
     // Redirect to login if trying to access personal features while unauthenticated
@@ -90,7 +91,7 @@ export default function Home() {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="text-white hover:bg-white/10 p-2" data-testid="button-user-menu">
                       <Avatar className="w-8 h-8 mr-2">
-                        <AvatarImage src={user?.profileImageUrl} />
+                        <AvatarImage src={user?.profileImageUrl || undefined} />
                         <AvatarFallback className="text-wine-dark">
                           {getUserDisplayName().charAt(0).toUpperCase()}
                         </AvatarFallback>
@@ -246,6 +247,8 @@ export default function Home() {
                       key={podcast.id}
                       podcast={podcast}
                       viewMode={viewMode}
+                      userFavorites={userFavorites}
+                      isAuthenticated={isAuthenticated}
                     />
                   ))}
                 </div>
@@ -299,6 +302,8 @@ export default function Home() {
                       key={podcast.id}
                       podcast={podcast}
                       viewMode={viewMode}
+                      userFavorites={userFavorites}
+                      isAuthenticated={isAuthenticated}
                     />
                   ))}
                 </div>

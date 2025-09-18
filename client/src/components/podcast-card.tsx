@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { MapPin, Calendar, Clock, Heart, Image } from "lucide-react";
+import { MapPin, Calendar, Clock, Heart, Image, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -11,6 +13,8 @@ import type { Podcast, UserFavorite } from "@shared/schema";
 interface PodcastCardProps {
   podcast: Podcast;
   viewMode?: "grid" | "list";
+  userFavorites: UserFavorite[];
+  isAuthenticated: boolean;
 }
 
 // Image component with fallback and lazy loading
@@ -77,26 +81,29 @@ const SOCIAL_ICON_MAP = {
   twitter: "fab fa-twitter",
 };
 
-const SOCIAL_COLOR_MAP = {
-  spotify: "bg-green-600 hover:bg-green-700",
-  instagram: "bg-gradient-to-br from-purple-600 to-pink-600 hover:opacity-80",
-  youtube: "bg-red-600 hover:bg-red-700",
-  website: "bg-gray-600 hover:bg-gray-700",
-  apple: "bg-gray-900 hover:bg-black",
-  twitter: "bg-blue-500 hover:bg-blue-600",
+const SOCIAL_LABELS = {
+  spotify: "Listen on Spotify",
+  instagram: "Follow on Instagram",
+  youtube: "Watch on YouTube", 
+  website: "Visit Website",
+  apple: "Listen on Apple Podcasts",
+  twitter: "Follow on Twitter",
 };
 
-export function PodcastCard({ podcast, viewMode = "grid" }: PodcastCardProps) {
-  const { isAuthenticated } = useAuth();
+const SOCIAL_COLOR_MAP = {
+  spotify: "bg-green-600 hover:bg-green-700 shadow-green-600/20",
+  instagram: "bg-gradient-to-br from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-purple-600/20",
+  youtube: "bg-red-600 hover:bg-red-700 shadow-red-600/20",
+  website: "bg-gray-600 hover:bg-gray-700 shadow-gray-600/20",
+  apple: "bg-gray-900 hover:bg-black shadow-gray-900/20",
+  twitter: "bg-blue-500 hover:bg-blue-600 shadow-blue-500/20",
+};
+
+export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthenticated }: PodcastCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get user favorites to check if this podcast is favorited
-  const { data: userFavorites = [] } = useQuery<UserFavorite[]>({
-    queryKey: ["/api/user/favorites"],
-    enabled: isAuthenticated,
-  });
-
+  // Check if this podcast is favorited using the passed-in data
   const isFavorited = userFavorites.some(fav => fav.podcastId === podcast.id);
 
   // Add favorite mutation
@@ -177,18 +184,21 @@ export function PodcastCard({ podcast, viewMode = "grid" }: PodcastCardProps) {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusConfig = (status: string) => {
     switch (status.toLowerCase()) {
       case "active":
-        return "bg-green-400";
+        return { bg: "bg-green-500", text: "text-green-50", border: "border-green-400", dot: "bg-green-400" };
       case "on hiatus":
-        return "bg-yellow-400";
+        return { bg: "bg-yellow-500", text: "text-yellow-50", border: "border-yellow-400", dot: "bg-yellow-400" };
       case "ended":
-        return "bg-red-400";
+        return { bg: "bg-red-500", text: "text-red-50", border: "border-red-400", dot: "bg-red-400" };
       default:
-        return "bg-gray-400";
+        return { bg: "bg-gray-500", text: "text-gray-50", border: "border-gray-400", dot: "bg-gray-400" };
     }
   };
+
+  // Get status configuration
+  const statusConfig = getStatusConfig(podcast.status);
 
   // Get top 3 social links in priority order
   const prioritizedSocials = ["spotify", "instagram", "youtube", "website", "apple", "twitter"];
@@ -198,190 +208,287 @@ export function PodcastCard({ podcast, viewMode = "grid" }: PodcastCardProps) {
 
   if (viewMode === "list") {
     return (
-      <div className="podcast-card bg-card rounded-xl border border-border p-6 flex gap-6">
-        {/* Left side - Podcast image */}
-        <div className="relative">
-          <PodcastImage
-            src={podcast.imageUrl ?? undefined}
-            alt={`${podcast.title} podcast logo`}
-            className="w-24 h-24 rounded-lg flex-shrink-0"
-            testId={`img-podcast-list-${podcast.id}`}
-          />
-          <div className="absolute top-2 right-2">
-            <div className={`w-2 h-2 ${getStatusColor(podcast.status)} rounded-full`}></div>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1">
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <h3 className="font-semibold text-lg mb-1">{podcast.title}</h3>
-              <p className="text-sm text-muted-foreground">{podcast.host}</p>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleFavoriteToggle}
-              disabled={isAuthenticated && (addFavoriteMutation.isPending || removeFavoriteMutation.isPending)}
-              data-testid={`button-favorite-${podcast.id}`}
-              className="flex items-center gap-2"
-            >
-              <Heart 
-                className={`w-4 h-4 ${isAuthenticated && isFavorited ? "fill-red-500 text-red-500" : "text-muted-foreground"}`}
+      <TooltipProvider>
+        <div className="podcast-card group bg-card rounded-2xl border border-border/50 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-wine-500/10 transition-all duration-500 hover:-translate-y-1 hover:border-wine-300/50">
+          <div className="p-6 flex gap-6">
+            {/* Left side - Enhanced Podcast image */}
+            <div className="relative flex-shrink-0">
+              <PodcastImage
+                src={podcast.imageUrl ?? undefined}
+                alt={`${podcast.title} podcast logo`}
+                className="w-28 h-28 rounded-2xl group-hover:scale-105 transition-transform duration-700"
+                testId={`img-podcast-list-${podcast.id}`}
               />
-              <span className="hidden md:inline">
-                {isAuthenticated ? (isFavorited ? "Remove from favorites" : "Add to favorites") : "Sign in to favorite"}
-              </span>
-            </Button>
-          </div>
-
-          <div className="flex flex-wrap gap-4 text-sm mb-3">
-            <div className="flex items-center gap-1">
-              <MapPin className="w-4 h-4 text-muted-foreground" />
-              <span>{podcast.country} • {podcast.language}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Calendar className="w-4 h-4 text-muted-foreground" />
-              <span>{podcast.year} • {podcast.episodes}</span>
-            </div>
-            {podcast.episodeLength && (
-              <div className="flex items-center gap-1">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                <span>{podcast.episodeLength}</span>
+              
+              {/* Status Badge - Top Left Corner */}
+              <div className="absolute -top-2 -left-2">
+                <Badge className={`${statusConfig.bg} ${statusConfig.text} border-0 px-2 py-1 text-xs font-medium shadow-lg`}>
+                  <div className={`w-1.5 h-1.5 ${statusConfig.dot} rounded-full mr-1.5`}></div>
+                  {podcast.status}
+                </Badge>
               </div>
-            )}
-          </div>
-
-          <div className="flex flex-wrap gap-1 mb-3">
-            {podcast.categories.slice(0, 3).map(category => (
-              <span key={category} className="px-2 py-1 bg-accent/20 text-accent-foreground rounded-md text-xs">
-                {category}
-              </span>
-            ))}
-          </div>
-
-          <div className="flex justify-between items-center">
-            <div className="flex gap-2">
-              {availableSocials.map(platform => (
-                <a
-                  key={platform}
-                  href={podcast.socialLinks?.[platform as keyof typeof podcast.socialLinks]}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-white transition-colors ${
-                    SOCIAL_COLOR_MAP[platform as keyof typeof SOCIAL_COLOR_MAP]
-                  }`}
-                  title={platform}
-                  data-testid={`link-social-${platform}-${podcast.id}`}
-                >
-                  <i className={`${SOCIAL_ICON_MAP[platform as keyof typeof SOCIAL_ICON_MAP]} text-sm`}></i>
-                </a>
-              ))}
+              
+              {/* Favorite Button - Top Right Corner */}
+              <div className="absolute -top-2 -right-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleFavoriteToggle}
+                      disabled={isAuthenticated && (addFavoriteMutation.isPending || removeFavoriteMutation.isPending)}
+                      data-testid={`button-favorite-${podcast.id}`}
+                      className="w-8 h-8 bg-wine-100 hover:bg-wine-200 dark:bg-wine-900 dark:hover:bg-wine-800 border border-wine-200 dark:border-wine-700 rounded-full transition-all duration-300 hover:scale-110"
+                    >
+                      <Heart 
+                        className={`w-3.5 h-3.5 transition-all duration-300 ${isAuthenticated && isFavorited ? "fill-red-500 text-red-500 scale-110" : "text-wine-600 dark:text-wine-300 group-hover:text-red-400"}`}
+                      />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{isAuthenticated ? (isFavorited ? "Remove from favorites" : "Add to favorites") : "Sign in to favorite"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             </div>
-            {/* View Details functionality removed per user requirements */}
+
+            {/* Content Section */}
+            <div className="flex-1 min-w-0">
+              {/* Title and Host */}
+              <div className="mb-4">
+                <h3 className="font-bold text-xl leading-tight line-clamp-2 text-foreground group-hover:text-wine-700 transition-colors duration-300 mb-2">
+                  {podcast.title}
+                </h3>
+                <p className="text-base text-muted-foreground font-medium">
+                  Hosted by {podcast.host}
+                </p>
+              </div>
+
+              {/* Metadata in organized layout */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+                <div className="flex items-center gap-2 text-sm">
+                  <MapPin className="w-4 h-4 text-wine-500 flex-shrink-0" />
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-medium text-foreground truncate">{podcast.country}</span>
+                    <span className="text-xs text-muted-foreground truncate">{podcast.language}</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2 text-sm">
+                  <Calendar className="w-4 h-4 text-wine-500 flex-shrink-0" />
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-medium text-foreground">{podcast.year}</span>
+                    <span className="text-xs text-muted-foreground truncate">{podcast.episodes}</span>
+                  </div>
+                </div>
+                
+                {podcast.episodeLength && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="w-4 h-4 text-wine-500 flex-shrink-0" />
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-medium text-foreground truncate">{podcast.episodeLength}</span>
+                      <span className="text-xs text-muted-foreground">Episode length</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Categories */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {podcast.categories.slice(0, 4).map(category => (
+                  <Badge 
+                    key={category} 
+                    variant="secondary" 
+                    className="bg-wine-50 text-wine-700 border-wine-200 hover:bg-wine-100 transition-colors duration-200 text-xs px-3 py-1"
+                  >
+                    {category}
+                  </Badge>
+                ))}
+                {podcast.categories.length > 4 && (
+                  <Badge variant="outline" className="text-xs px-3 py-1 text-muted-foreground">
+                    +{podcast.categories.length - 4} more
+                  </Badge>
+                )}
+              </div>
+
+              {/* Description */}
+              {podcast.description && (
+                <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mb-4">
+                  {podcast.description}
+                </p>
+              )}
+
+              {/* Social Links Footer */}
+              <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Listen on</span>
+                <div className="flex gap-2">
+                  {availableSocials.map(platform => (
+                    <Tooltip key={platform}>
+                      <TooltipTrigger asChild>
+                        <a
+                          href={podcast.socialLinks?.[platform as keyof typeof podcast.socialLinks]}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`w-9 h-9 rounded-full flex items-center justify-center text-white transition-all duration-300 hover:scale-110 hover:shadow-lg ${
+                            SOCIAL_COLOR_MAP[platform as keyof typeof SOCIAL_COLOR_MAP]
+                          }`}
+                          data-testid={`link-social-${platform}-${podcast.id}`}
+                        >
+                          <i className={`${SOCIAL_ICON_MAP[platform as keyof typeof SOCIAL_ICON_MAP]} text-sm`}></i>
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{SOCIAL_LABELS[platform as keyof typeof SOCIAL_LABELS]}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </TooltipProvider>
     );
   }
 
   // Grid view (default)
   return (
-    <div className="podcast-card bg-card rounded-xl border border-border overflow-hidden">
-      {/* Podcast Image with Wine Background */}
-      <div className="relative">
-        <PodcastImage
-          src={podcast.imageUrl ?? undefined}
-          alt={`${podcast.title} podcast logo`}
-          className="h-32"
-          testId={`img-podcast-grid-${podcast.id}`}
-        />
-        <div className="absolute bottom-4 left-4 right-4">
-          <div className="flex items-center gap-2 text-white">
-            <div className={`w-2 h-2 ${getStatusColor(podcast.status)} rounded-full`}></div>
-            <span className="text-xs font-medium">{podcast.status}</span>
+    <TooltipProvider>
+      <div className="podcast-card group bg-card rounded-2xl border border-border/50 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-wine-500/10 transition-all duration-500 hover:-translate-y-1 hover:border-wine-300/50">
+        {/* Podcast Image with Enhanced Wine Background */}
+        <div className="relative h-48 overflow-hidden">
+          <PodcastImage
+            src={podcast.imageUrl ?? undefined}
+            alt={`${podcast.title} podcast logo`}
+            className="h-full group-hover:scale-105 transition-transform duration-700"
+            testId={`img-podcast-grid-${podcast.id}`}
+          />
+          
+          {/* Status Badge - Top Left */}
+          <div className="absolute top-3 left-3">
+            <Badge className={`${statusConfig.bg} ${statusConfig.text} border-0 px-2 py-1 text-xs font-medium shadow-lg backdrop-blur-sm`}>
+              <div className={`w-1.5 h-1.5 ${statusConfig.dot} rounded-full mr-1.5`}></div>
+              {podcast.status}
+            </Badge>
           </div>
+          
+          {/* Favorite Button - Top Right */}
+          <div className="absolute top-3 right-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleFavoriteToggle}
+                  disabled={isAuthenticated && (addFavoriteMutation.isPending || removeFavoriteMutation.isPending)}
+                  data-testid={`button-favorite-${podcast.id}`}
+                  className="w-9 h-9 bg-black/20 hover:bg-black/40 backdrop-blur-md text-white border-0 rounded-full transition-all duration-300 hover:scale-110"
+                >
+                  <Heart 
+                    className={`w-4 h-4 transition-all duration-300 ${isAuthenticated && isFavorited ? "fill-red-500 text-red-500 scale-110" : "text-white group-hover:text-red-200"}`}
+                  />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{isAuthenticated ? (isFavorited ? "Remove from favorites" : "Add to favorites") : "Sign in to favorite"}</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          
+          {/* Gradient Overlay for better text readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60"></div>
         </div>
-        <div className="absolute top-4 right-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleFavoriteToggle}
-            disabled={isAuthenticated && (addFavoriteMutation.isPending || removeFavoriteMutation.isPending)}
-            data-testid={`button-favorite-${podcast.id}`}
-            className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border-0"
-          >
-            <Heart 
-              className={`w-4 h-4 ${isAuthenticated && isFavorited ? "fill-red-500 text-red-500" : "text-white"}`}
-            />
-          </Button>
-        </div>
-      </div>
 
-      <div className="p-5">
-        <div className="mb-3">
-          <h3 className="font-semibold text-lg mb-1 line-clamp-2">{podcast.title}</h3>
-          <p className="text-sm text-muted-foreground">{podcast.host}</p>
-        </div>
+        {/* Card Content */}
+        <div className="p-6 space-y-4">
+          {/* Title and Host */}
+          <div className="space-y-2">
+            <h3 className="font-bold text-xl leading-tight line-clamp-2 text-foreground group-hover:text-wine-700 transition-colors duration-300">
+              {podcast.title}
+            </h3>
+            <p className="text-base text-muted-foreground font-medium">
+              Hosted by {podcast.host}
+            </p>
+          </div>
 
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center gap-2 text-sm">
-            <MapPin className="text-muted-foreground w-4" />
-            <span>{podcast.country}</span>
-            <span className="text-muted-foreground">•</span>
-            <span>{podcast.language}</span>
+          {/* Metadata Grid */}
+          <div className="grid grid-cols-2 gap-3 py-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MapPin className="w-4 h-4 text-wine-500" />
+              <div className="flex flex-col">
+                <span className="font-medium text-foreground">{podcast.country}</span>
+                <span className="text-xs">{podcast.language}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Calendar className="w-4 h-4 text-wine-500" />
+              <div className="flex flex-col">
+                <span className="font-medium text-foreground">{podcast.year}</span>
+                <span className="text-xs">{podcast.episodes}</span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Calendar className="text-muted-foreground w-4" />
-            <span>{podcast.year}</span>
-            <span className="text-muted-foreground">•</span>
-            <span>{podcast.episodes}</span>
-          </div>
+
           {podcast.episodeLength && (
-            <div className="flex items-center gap-2 text-sm">
-              <Clock className="text-muted-foreground w-4" />
-              <span>{podcast.episodeLength}</span>
+            <div className="flex items-center gap-2 text-sm bg-muted/30 rounded-lg px-3 py-2">
+              <Clock className="w-4 h-4 text-wine-500" />
+              <span className="font-medium text-foreground">{podcast.episodeLength}</span>
             </div>
           )}
-        </div>
 
-        <div className="flex flex-wrap gap-1 mb-4">
-          {podcast.categories.slice(0, 2).map(category => (
-            <span key={category} className="px-2 py-1 bg-accent/20 text-accent-foreground rounded-md text-xs">
-              {category}
-            </span>
-          ))}
-        </div>
-
-        {podcast.description && (
-          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-            {podcast.description}
-          </p>
-        )}
-
-        {/* Social Links (Max 3) */}
-        <div className="flex items-center justify-between">
-          <div className="flex gap-2">
-            {availableSocials.map(platform => (
-              <a
-                key={platform}
-                href={podcast.socialLinks?.[platform as keyof typeof podcast.socialLinks]}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-white transition-colors ${
-                  SOCIAL_COLOR_MAP[platform as keyof typeof SOCIAL_COLOR_MAP]
-                }`}
-                title={platform}
-                data-testid={`link-social-${platform}-${podcast.id}`}
+          {/* Categories */}
+          <div className="flex flex-wrap gap-2">
+            {podcast.categories.slice(0, 2).map(category => (
+              <Badge 
+                key={category} 
+                variant="secondary" 
+                className="bg-wine-50 text-wine-700 border-wine-200 hover:bg-wine-100 transition-colors duration-200 text-xs px-3 py-1"
               >
-                <i className={`${SOCIAL_ICON_MAP[platform as keyof typeof SOCIAL_ICON_MAP]} text-sm`}></i>
-              </a>
+                {category}
+              </Badge>
             ))}
+            {podcast.categories.length > 2 && (
+              <Badge variant="outline" className="text-xs px-3 py-1 text-muted-foreground">
+                +{podcast.categories.length - 2} more
+              </Badge>
+            )}
           </div>
-          {/* View Details functionality removed per user requirements */}
+
+          {/* Description */}
+          {podcast.description && (
+            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+              {podcast.description}
+            </p>
+          )}
+
+          {/* Social Links */}
+          <div className="flex items-center gap-3 pt-2 border-t border-border/50">
+            <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Listen on</span>
+            <div className="flex gap-2 flex-1">
+              {availableSocials.map(platform => (
+                <Tooltip key={platform}>
+                  <TooltipTrigger asChild>
+                    <a
+                      href={podcast.socialLinks?.[platform as keyof typeof podcast.socialLinks]}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`w-9 h-9 rounded-full flex items-center justify-center text-white transition-all duration-300 hover:scale-110 hover:shadow-lg ${
+                        SOCIAL_COLOR_MAP[platform as keyof typeof SOCIAL_COLOR_MAP]
+                      } group-hover:animate-pulse`}
+                      data-testid={`link-social-${platform}-${podcast.id}`}
+                    >
+                      <i className={`${SOCIAL_ICON_MAP[platform as keyof typeof SOCIAL_ICON_MAP]} text-sm`}></i>
+                    </a>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{SOCIAL_LABELS[platform as keyof typeof SOCIAL_LABELS]}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
