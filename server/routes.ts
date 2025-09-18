@@ -104,10 +104,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .on('data', (row) => {
             rowNumber++;
             
-            // Log first row for debugging
-            if (rowNumber === 1) {
-              console.log('First row data:', row);
-              console.log('Available columns:', Object.keys(row));
+            // Log first few rows for debugging
+            if (rowNumber <= 3) {
+              console.log(`Row ${rowNumber} data:`, row);
+              console.log(`Row ${rowNumber} columns:`, Object.keys(row));
             }
             
             try {
@@ -144,7 +144,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               ]);
               
               const language = getColumnValue([
-                'Primary Language(s)', 'language', 'Language', 'LANGUAGE', 'lang', 'languages'
+                'Primary Language(s)', 'language', 'Language', 'LANGUAGE', 'lang', 'languages',
+                'Lingua', 'lingua', 'LINGUA', 'linguaggio', 'Linguaggio', 'idioma', 'idiomas',
+                'Primary Language', 'primary_language', 'main_language', 'podcast_language',
+                'spoken_language', 'audio_language'
               ]);
               
               const yearStr = getColumnValue([
@@ -171,21 +174,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 'Description', 'description', 'desc', 'about', 'summary'
               ]);
 
-              // Validate required fields
+              // Validate required fields with detailed info
               if (!title) {
-                throw new Error('Missing title');
+                throw new Error(`Missing title. Available columns: ${Object.keys(row).join(', ')}`);
               }
               if (!host) {
-                throw new Error('Missing host');
+                throw new Error(`Missing host. Available columns: ${Object.keys(row).join(', ')}`);
               }
               if (!country) {
-                throw new Error('Missing country');
+                throw new Error(`Missing country. Available columns: ${Object.keys(row).join(', ')}`);
               }
               if (!language) {
-                throw new Error('Missing language');
+                throw new Error(`Missing language field. Available columns: ${Object.keys(row).join(', ')}`);
               }
               if (!yearStr || isNaN(parseInt(yearStr))) {
-                throw new Error('Missing or invalid year');
+                throw new Error(`Missing or invalid year. Available columns: ${Object.keys(row).join(', ')}`);
               }
 
               const podcastData: InsertPodcast = {
