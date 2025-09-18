@@ -80,6 +80,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update single podcast (Admin only)
+  app.patch("/api/podcasts/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const podcastData = insertPodcastSchema.parse(req.body);
+      const updatedPodcast = await storage.updatePodcast(req.params.id, podcastData);
+      
+      if (!updatedPodcast) {
+        return res.status(404).json({ message: "Podcast not found" });
+      }
+      
+      res.json(updatedPodcast);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid podcast data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to update podcast", error });
+      }
+    }
+  });
+
+  // Delete single podcast (Admin only)
+  app.delete("/api/podcasts/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const success = await storage.deletePodcast(req.params.id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Podcast not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete podcast", error });
+    }
+  });
+
   // CSV Import endpoint
   app.post("/api/podcasts/import", upload.single('csvFile'), async (req, res) => {
     try {

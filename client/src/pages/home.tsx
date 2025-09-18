@@ -6,7 +6,8 @@ import { CSVImport } from "@/components/csv-import";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Grid, List, Search, Upload, Heart, FileText, LogOut, User as UserIcon, LogIn } from "lucide-react";
+import { Grid, List, Search, Upload, Heart, FileText, LogOut, User as UserIcon, LogIn, Settings } from "lucide-react";
+import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import type { Podcast, SearchFilters as SearchFiltersType, UserFavorite, User } from "@shared/schema";
 
@@ -103,6 +104,12 @@ export default function Home() {
                     <DropdownMenuItem disabled>
                       <UserIcon className="mr-2 h-4 w-4" />
                       <span data-testid="text-user-email">{user?.email}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin" data-testid="link-admin">
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Admin Panel</span>
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleLogout} data-testid="button-logout">
                       <LogOut className="mr-2 h-4 w-4" />

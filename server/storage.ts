@@ -43,6 +43,7 @@ export interface IStorage {
   bulkCreatePodcasts(podcasts: InsertPodcast[]): Promise<Podcast[]>;
   findPodcastsByTitleHost(titleHostPairs: Array<{title: string, host: string}>): Promise<Podcast[]>;
   updatePodcast(id: string, podcast: InsertPodcast): Promise<Podcast | undefined>;
+  deletePodcast(id: string): Promise<boolean>;
   
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
@@ -184,6 +185,18 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Failed to update podcast:', error);
       return undefined;
+    }
+  }
+
+  async deletePodcast(id: string): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(podcasts)
+        .where(eq(podcasts.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Failed to delete podcast:', error);
+      return false;
     }
   }
 
