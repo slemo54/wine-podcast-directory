@@ -130,7 +130,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const stats = await storage.getStatistics();
       res.json(stats);
     } catch (error) {
-      res.status(500).json({ message: "Failed to get statistics", error });
+      console.error('Statistics error:', error);
+      res.status(500).json({ 
+        message: "Failed to get statistics", 
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
