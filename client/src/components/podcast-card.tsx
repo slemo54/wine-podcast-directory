@@ -1,4 +1,5 @@
-import { MapPin, Calendar, Clock, Heart } from "lucide-react";
+import { useState } from "react";
+import { MapPin, Calendar, Clock, Heart, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -10,6 +11,61 @@ import type { Podcast, UserFavorite } from "@shared/schema";
 interface PodcastCardProps {
   podcast: Podcast;
   viewMode?: "grid" | "list";
+}
+
+// Image component with fallback and lazy loading
+interface PodcastImageProps {
+  src?: string;
+  alt: string;
+  className: string;
+  testId: string;
+}
+
+function PodcastImage({ src, alt, className, testId }: PodcastImageProps) {
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const handleError = () => {
+    setHasError(true);
+    setIsLoading(false);
+  };
+
+  const handleLoad = () => {
+    setIsLoading(false);
+  };
+
+  // If no src or error occurred, show wine gradient fallback
+  if (!src || hasError) {
+    return (
+      <div className={`${className} wine-gradient relative flex items-center justify-center`}>
+        <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+        <Image className="w-8 h-8 text-white/60" data-testid={`${testId}-fallback`} />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${className} relative overflow-hidden bg-wine-gradient`}>
+      {isLoading && (
+        <div className="absolute inset-0 wine-gradient flex items-center justify-center">
+          <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+          <Image className="w-8 h-8 text-white/60" />
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        onError={handleError}
+        onLoad={handleLoad}
+        className={`w-full h-full object-cover transition-opacity duration-300 ${
+          isLoading ? 'opacity-0' : 'opacity-100'
+        }`}
+        data-testid={testId}
+      />
+      <div className="absolute inset-0 bg-black bg-opacity-10"></div>
+    </div>
+  );
 }
 
 const SOCIAL_ICON_MAP = {
@@ -143,9 +199,14 @@ export function PodcastCard({ podcast, viewMode = "grid" }: PodcastCardProps) {
   if (viewMode === "list") {
     return (
       <div className="podcast-card bg-card rounded-xl border border-border p-6 flex gap-6">
-        {/* Left side - Wine gradient placeholder */}
-        <div className="w-24 h-24 wine-gradient relative rounded-lg flex-shrink-0">
-          <div className="absolute inset-0 bg-black bg-opacity-20 rounded-lg"></div>
+        {/* Left side - Podcast image */}
+        <div className="relative">
+          <PodcastImage
+            src={podcast.imageUrl ?? undefined}
+            alt={`${podcast.title} podcast logo`}
+            className="w-24 h-24 rounded-lg flex-shrink-0"
+            testId={`img-podcast-list-${podcast.id}`}
+          />
           <div className="absolute top-2 right-2">
             <div className={`w-2 h-2 ${getStatusColor(podcast.status)} rounded-full`}></div>
           </div>
@@ -229,8 +290,13 @@ export function PodcastCard({ podcast, viewMode = "grid" }: PodcastCardProps) {
   return (
     <div className="podcast-card bg-card rounded-xl border border-border overflow-hidden">
       {/* Podcast Image with Wine Background */}
-      <div className="h-32 wine-gradient relative">
-        <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+      <div className="relative">
+        <PodcastImage
+          src={podcast.imageUrl ?? undefined}
+          alt={`${podcast.title} podcast logo`}
+          className="h-32"
+          testId={`img-podcast-grid-${podcast.id}`}
+        />
         <div className="absolute bottom-4 left-4 right-4">
           <div className="flex items-center gap-2 text-white">
             <div className={`w-2 h-2 ${getStatusColor(podcast.status)} rounded-full`}></div>
