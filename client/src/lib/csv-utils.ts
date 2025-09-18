@@ -61,8 +61,11 @@ export function validatePodcastCSVRow(row: CSVRow): string[] {
     errors.push('Missing country');
   }
   
-  if (!row['Primary Language(s)'] && !row['language']) {
-    errors.push('Missing language');
+  // Language is now optional - defaults to English on server
+  const language = row['Primary Language(s) of the Podcast'] || row['Primary Language(s)'] || row['language'];
+  if (!language) {
+    // Don't treat as error - server will apply default
+    console.log('Language field empty, will use default "English"');
   }
   
   const year = row['Year Launched'] || row['year'];
