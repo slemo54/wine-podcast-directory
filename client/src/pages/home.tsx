@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { StatisticsHeader } from "@/components/statistics-header";
 import { SearchFilters } from "@/components/search-filters";
 import { PodcastCard } from "@/components/podcast-card";
 import { CSVImport } from "@/components/csv-import";
@@ -31,8 +30,21 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Header with Statistics */}
-      <StatisticsHeader />
+      {/* Header */}
+      <header className="wine-gradient text-white relative overflow-hidden">
+        <div className="container mx-auto px-4 py-8 relative z-10">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-6xl font-bold mb-4 text-shadow">
+              Wine Podcast Directory
+            </h1>
+            <p className="text-xl md:text-2xl mb-8 opacity-90">
+              Discover premium wine podcasts from around the world
+            </p>
+          </div>
+        </div>
+        <div className="absolute inset-0 bg-black opacity-20"></div>
+        <div className="absolute -bottom-1 left-0 right-0 h-8 bg-gradient-to-r from-rose-900/20 to-amber-900/20 transform skew-y-1"></div>
+      </header>
 
       {/* Navigation Tabs */}
       <nav className="bg-card border-b border-border sticky top-0 z-50">

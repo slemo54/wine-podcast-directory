@@ -12,13 +12,7 @@ export interface IStorage {
   
   // Favorites functionality removed per user requirements
   
-  // Statistics
-  getStatistics(): Promise<{
-    totalPodcasts: number;
-    activePodcasts: number;
-    countriesCount: number;
-    languagesCount: number;
-  }>;
+  // Statistics removed per user request
 }
 
 export class DatabaseStorage implements IStorage {
@@ -40,77 +34,64 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchPodcasts(filters: SearchFilters): Promise<Podcast[]> {
-    let query = db.select().from(podcasts);
-    const conditions = [];
+    const allPodcasts = await db.select().from(podcasts);
+    let results = allPodcasts;
 
     // Text search
     if (filters.query) {
-      const searchTerm = `%${filters.query}%`;
-      conditions.push(
-        or(
-          ilike(podcasts.title, searchTerm),
-          ilike(podcasts.host, searchTerm),
-          ilike(podcasts.country, searchTerm),
-          ilike(podcasts.description, searchTerm),
-          sql`EXISTS (
-            SELECT 1 FROM unnest(${podcasts.categories}) AS category 
-            WHERE category ILIKE ${searchTerm}
-          )`
-        )
+      const query = filters.query.toLowerCase();
+      results = results.filter(p => 
+        p.title.toLowerCase().includes(query) ||
+        p.host.toLowerCase().includes(query) ||
+        p.country.toLowerCase().includes(query) ||
+        p.description?.toLowerCase().includes(query) ||
+        p.categories.some(cat => cat.toLowerCase().includes(query))
       );
     }
 
     // Episode length filter
     if (filters.episodeLength) {
-      conditions.push(eq(podcasts.episodeLength, filters.episodeLength));
+      results = results.filter(p => p.episodeLength === filters.episodeLength);
     }
 
     // Categories filter
     if (filters.categories && filters.categories.length > 0) {
-      conditions.push(
-        sql`${podcasts.categories} && ${filters.categories}`
+      results = results.filter(p => 
+        filters.categories!.some(cat => p.categories.includes(cat))
       );
     }
 
     // Status filter
     if (filters.status) {
-      conditions.push(eq(podcasts.status, filters.status));
+      results = results.filter(p => p.status === filters.status);
     }
 
     // Country filter
     if (filters.country) {
-      conditions.push(eq(podcasts.country, filters.country));
-    }
-
-    // Apply conditions
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
+      results = results.filter(p => p.country === filters.country);
     }
 
     // Sorting
     if (filters.sortBy) {
-      switch (filters.sortBy) {
-        case "title":
-          query = query.orderBy(asc(podcasts.title));
-          break;
-        case "title-desc":
-          query = query.orderBy(desc(podcasts.title));
-          break;
-        case "year":
-          query = query.orderBy(asc(podcasts.year));
-          break;
-        case "year-desc":
-          query = query.orderBy(desc(podcasts.year));
-          break;
-        case "country":
-          query = query.orderBy(asc(podcasts.country));
-          break;
-        default:
-          break;
-      }
+      results.sort((a, b) => {
+        switch (filters.sortBy) {
+          case "title":
+            return a.title.localeCompare(b.title);
+          case "title-desc":
+            return b.title.localeCompare(a.title);
+          case "year":
+            return a.year - b.year;
+          case "year-desc":
+            return b.year - a.year;
+          case "country":
+            return a.country.localeCompare(b.country);
+          default:
+            return 0;
+        }
+      });
     }
 
-    return await query;
+    return results;
   }
 
   async bulkCreatePodcasts(insertPodcasts: InsertPodcast[]): Promise<Podcast[]> {
@@ -126,36 +107,7 @@ export class DatabaseStorage implements IStorage {
 
   // Favorites functionality removed per user requirements
 
-  async getStatistics(): Promise<{
-    totalPodcasts: number;
-    activePodcasts: number;
-    countriesCount: number;
-    languagesCount: number;
-  }> {
-    const [totalCount] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(podcasts);
-    
-    const [activeCount] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(podcasts)
-      .where(eq(podcasts.status, 'Active'));
-    
-    const [countriesCount] = await db
-      .select({ count: sql<number>`count(distinct country)` })
-      .from(podcasts);
-    
-    const [languagesCount] = await db
-      .select({ count: sql<number>`count(distinct unnest(string_to_array(language, ',')))` })
-      .from(podcasts);
-
-    return {
-      totalPodcasts: totalCount.count,
-      activePodcasts: activeCount.count,
-      countriesCount: countriesCount.count,
-      languagesCount: languagesCount.count,
-    };
-  }
+  // Statistics removed per user request
 }
 
 export const storage = new DatabaseStorage();

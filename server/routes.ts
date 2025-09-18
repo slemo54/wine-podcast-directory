@@ -124,19 +124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Favorites functionality removed per user requirements
 
-  // Statistics endpoint
-  app.get("/api/statistics", async (req, res) => {
-    try {
-      const stats = await storage.getStatistics();
-      res.json(stats);
-    } catch (error) {
-      console.error('Statistics error:', error);
-      res.status(500).json({ 
-        message: "Failed to get statistics", 
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
+  // Statistics removed per user request
 
   const httpServer = createServer(app);
   return httpServer;
