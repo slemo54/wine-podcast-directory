@@ -98,7 +98,7 @@ export default function Admin() {
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: InsertPodcast }) => {
-      return apiRequest(`/api/podcasts/${id}`, "PATCH", data);
+      return apiRequest("PATCH", `/api/podcasts/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/podcasts"] });
@@ -121,7 +121,7 @@ export default function Admin() {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest(`/api/podcasts/${id}`, "DELETE");
+      return apiRequest("DELETE", `/api/podcasts/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/podcasts"] });
@@ -507,7 +507,7 @@ export default function Admin() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="Unspecified">None</SelectItem>
                           <SelectItem value="Under 10min">Under 10min</SelectItem>
                           <SelectItem value="10-20min">10-20min</SelectItem>
                           <SelectItem value="20-40min">20-40min</SelectItem>
