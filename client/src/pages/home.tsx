@@ -122,7 +122,7 @@ export default function Home() {
                   variant="secondary"
                   onClick={() => window.location.href = "/auth"}
                   data-testid="button-login"
-                  className="bg-white/10 hover:bg-white/20 text-white border-white/20 text-sm sm:text-base px-3 sm:px-4 py-2"
+                  className="hidden bg-white/10 hover:bg-white/20 text-white border-white/20 text-sm sm:text-base px-3 sm:px-4 py-2"
                 >
                   <LogIn className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                   <span className="hidden xs:inline">Sign In</span>
