@@ -185,6 +185,16 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
     }
   };
 
+  // Helper function to convert Instagram handles to full URLs
+  const getSocialUrl = (platform: string, url: string) => {
+    if (platform === 'instagram' && url.startsWith('@')) {
+      // Convert @username to https://www.instagram.com/username/
+      const username = url.slice(1); // Remove @
+      return `https://www.instagram.com/${username}/`;
+    }
+    return url;
+  };
+
 
   // Get top 3 social links in priority order
   const prioritizedSocials = ["spotify", "instagram", "youtube", "website", "apple", "twitter"];
@@ -306,7 +316,7 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
                       <Tooltip key={platform}>
                         <TooltipTrigger asChild>
                           <a
-                            href={podcast.socialLinks?.[platform as keyof typeof podcast.socialLinks]}
+                            href={getSocialUrl(platform, podcast.socialLinks?.[platform as keyof typeof podcast.socialLinks] || '')}
                             target="_blank"
                             rel="noopener noreferrer"
                             className={`w-9 h-9 rounded-full flex items-center justify-center text-white transition-all duration-300 hover:scale-110 hover:shadow-lg ${
@@ -443,7 +453,7 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
                 <Tooltip key={platform}>
                   <TooltipTrigger asChild>
                     <a
-                      href={podcast.socialLinks?.[platform as keyof typeof podcast.socialLinks]}
+                      href={getSocialUrl(platform, podcast.socialLinks?.[platform as keyof typeof podcast.socialLinks] || '')}
                       target="_blank"
                       rel="noopener noreferrer"
                       className={`w-9 h-9 rounded-full flex items-center justify-center text-white transition-all duration-300 hover:scale-110 hover:shadow-lg ${
