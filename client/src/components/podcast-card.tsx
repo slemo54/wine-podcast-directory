@@ -185,21 +185,6 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
     }
   };
 
-  const getStatusConfig = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "active":
-        return { bg: "bg-green-500", text: "text-green-50", border: "border-green-400", dot: "bg-green-400" };
-      case "on hiatus":
-        return { bg: "bg-yellow-500", text: "text-yellow-50", border: "border-yellow-400", dot: "bg-yellow-400" };
-      case "ended":
-        return { bg: "bg-red-500", text: "text-red-50", border: "border-red-400", dot: "bg-red-400" };
-      default:
-        return { bg: "bg-gray-500", text: "text-gray-50", border: "border-gray-400", dot: "bg-gray-400" };
-    }
-  };
-
-  // Get status configuration
-  const statusConfig = getStatusConfig(podcast.status);
 
   // Get top 3 social links in priority order
   const prioritizedSocials = ["spotify", "instagram", "youtube", "website", "apple", "twitter"];
@@ -221,13 +206,6 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
                 testId={`img-podcast-list-${podcast.id}`}
               />
               
-              {/* Status Badge - Top Left Corner */}
-              <div className="absolute -top-2 -left-2">
-                <Badge className={`${statusConfig.bg} ${statusConfig.text} border-0 px-2 py-1 text-xs font-medium shadow-lg`}>
-                  <div className={`w-1.5 h-1.5 ${statusConfig.dot} rounded-full mr-1.5`}></div>
-                  {podcast.status}
-                </Badge>
-              </div>
               
               {/* Favorite Button - Top Right Corner */}
               <div className="absolute -top-2 -right-2">
@@ -367,13 +345,6 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
             testId={`img-podcast-grid-${podcast.id}`}
           />
           
-          {/* Status Badge - Top Left */}
-          <div className="absolute top-3 left-3">
-            <Badge className={`${statusConfig.bg} ${statusConfig.text} border-0 px-2 py-1 text-xs font-medium shadow-lg backdrop-blur-sm`}>
-              <div className={`w-1.5 h-1.5 ${statusConfig.dot} rounded-full mr-1.5`}></div>
-              {podcast.status}
-            </Badge>
-          </div>
           
           {/* Favorite Button - Top Right */}
           <div className="absolute top-3 right-3">
