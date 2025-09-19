@@ -51,7 +51,7 @@ function calculateBackoffDelay(attemptCount: number): number {
 // Custom middleware for username-based rate limiting with exponential backoff
 function createUsernameRateLimit(): RequestHandler {
   return (req, res, next) => {
-    const identifier = ipKeyGenerator(req, res) || 'unknown';
+    const identifier = ipKeyGenerator(req.ip || '') || 'unknown';
     const username = req.body?.username?.trim().toLowerCase();
     
     if (!username) {
@@ -77,7 +77,7 @@ function createUsernameRateLimit(): RequestHandler {
     
     // Store original end function to intercept response
     const originalEnd = res.end;
-    res.end = function(this: typeof res, chunk?: any, encoding?: BufferEncoding | (() => void), cb?: () => void) {
+    res.end = function(this: typeof res, ...args: any[]): typeof res {
       // Check if this was a failed authentication attempt (401 status)
       if (res.statusCode === 401) {
         // Update attempt counters for both IP and username
@@ -99,14 +99,8 @@ function createUsernameRateLimit(): RequestHandler {
         console.log(`Successful login for user '${username}' from IP '${identifier}'. Rate limit counters reset.`);
       }
       
-      // Call original end function with proper arguments
-      if (typeof encoding === 'function') {
-        // encoding is actually a callback function
-        return originalEnd.call(this, chunk, encoding);
-      } else {
-        // Normal case with chunk, encoding, and optional callback
-        return originalEnd.call(this, chunk, encoding, cb);
-      }
+      // Call original end function with all original arguments
+      return (originalEnd as any).apply(this, args);
     };
     
     next();
@@ -188,15 +182,69 @@ export function getSession() {
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      // Use 'none' for iframe contexts to allow cross-site cookies
+      // This will be dynamically adjusted based on request context
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: sessionTtl,
     },
   });
 }
 
+// Dynamic session configuration for iframe contexts
+export function configureSessionForIframe(req: any, res: any, next: any) {
+  const isIframeContext = req.get('X-Iframe-Context') === 'true' || 
+                         req.query.iframe === 'true' ||
+                         req.path.includes('/iframe');
+  
+  if (isIframeContext) {
+    // For iframe contexts, we need to be more permissive with cookies
+    const originalSetCookie = res.setHeader;
+    res.setHeader = function(name: string, value: any) {
+      if (name.toLowerCase() === 'set-cookie') {
+        // Modify cookie settings for iframe compatibility
+        if (Array.isArray(value)) {
+          value = value.map((cookie: string) => {
+            if (cookie.includes('connect.sid')) {
+              // Ensure SameSite=None for iframe contexts in production
+              if (process.env.NODE_ENV === 'production') {
+                cookie = cookie.replace(/SameSite=\w+/i, 'SameSite=None');
+                if (!cookie.includes('Secure')) {
+                  cookie += '; Secure';
+                }
+              }
+              // Add additional flags for iframe compatibility
+              if (!cookie.includes('Partitioned')) {
+                cookie += '; Partitioned';
+              }
+            }
+            return cookie;
+          });
+        } else if (typeof value === 'string' && value.includes('connect.sid')) {
+          if (process.env.NODE_ENV === 'production') {
+            value = value.replace(/SameSite=\w+/i, 'SameSite=None');
+            if (!value.includes('Secure')) {
+              value += '; Secure';
+            }
+          }
+          if (!value.includes('Partitioned')) {
+            value += '; Partitioned';
+          }
+        }
+      }
+      return originalSetCookie.call(this, name, value);
+    };
+  }
+  
+  next();
+}
+
 // Passport setup
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
+  
+  // Add iframe-friendly session configuration before session initialization
+  app.use(configureSessionForIframe);
+  
   app.use(getSession());
   app.use(passport.initialize());
   app.use(passport.session());

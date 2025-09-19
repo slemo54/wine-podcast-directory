@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedAdminUser } from "./auth";
@@ -6,6 +7,122 @@ import { seedAdminUser } from "./auth";
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// CORS configuration for WordPress iframe embedding
+const corsOptions = {
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // List of allowed WordPress domains and patterns
+    const allowedOrigins = [
+      // Development origins
+      'http://localhost:3000',
+      'http://localhost:5000',
+      'http://localhost:8080',
+      'https://localhost:3000',
+      'https://localhost:5000',
+      'https://localhost:8080',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:5000',
+      'http://127.0.0.1:8080',
+      'https://127.0.0.1:3000',
+      'https://127.0.0.1:5000',
+      'https://127.0.0.1:8080',
+      
+      // Production origins - Add your WordPress domain here
+      // 'https://your-wordpress-site.com',
+      // 'https://www.your-wordpress-site.com',
+    ];
+    
+    // Check for Replit domains (all Replit subdomains)
+    const isReplitDomain = /^https?:\/\/[\w\-]+\.replit\.dev$/.test(origin) || 
+                          /^https?:\/\/[\w\-]+\.repl\.co$/.test(origin) ||
+                          /^https?:\/\/[\w\-]+-[\w\-]+-[\w\-]+-[\w\-]+-[\w\-]+\.[\w\-]+\.replit\.dev$/.test(origin);
+    
+    // Check for WordPress.com subdomains
+    const isWordPressSubdomain = /^https?:\/\/[\w\-]+\.wordpress\.com$/.test(origin);
+    
+    // Check for common WordPress hosting patterns
+    const isWordPressHosting = /^https?:\/\/[\w\-\.]+\.(wpengine|kinsta|siteground|godaddy)\.com$/.test(origin);
+    
+    // For development, also allow test domains
+    const isTestDomain = /^https?:\/\/(test|example)\.[\w\-]+\.com$/.test(origin);
+    
+    // Check if origin is in allowed list or matches WordPress/Replit patterns
+    if (allowedOrigins.includes(origin) || isReplitDomain || isWordPressSubdomain || isWordPressHosting || isTestDomain) {
+      console.log(`CORS: Allowed origin: ${origin}`);
+      callback(null, true);
+    } else {
+      // Log rejected origins for debugging
+      console.log(`CORS: Rejected origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'), false);
+    }
+  },
+  credentials: true, // Enable cookies for authentication
+  optionsSuccessStatus: 200, // For legacy browser support
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: [
+    'Origin', 
+    'X-Requested-With', 
+    'Content-Type', 
+    'Accept', 
+    'Authorization', 
+    'Cache-Control',
+    'X-Iframe-Context'
+  ],
+  exposedHeaders: ['X-Frame-Options', 'Content-Security-Policy']
+};
+
+app.use(cors(corsOptions));
+
+// Security headers for iframe embedding
+app.use((req: Request, res: Response, next: NextFunction) => {
+  // Check if request is from iframe context
+  const isIframeContext = req.get('X-Iframe-Context') === 'true' || 
+                         req.query.iframe === 'true' ||
+                         req.path.includes('/iframe');
+  
+  // Define static frame ancestors allowlist with environment variable support
+  const FRAME_ANCESTORS = [
+    "'self'",
+    "https://*.wordpress.com",
+    // Add custom domains from environment variable (comma-separated)
+    ...(process.env.FRAME_ANCESTORS ? process.env.FRAME_ANCESTORS.split(',').map(domain => domain.trim()) : []),
+    // Development domains
+    ...(process.env.NODE_ENV !== 'production' ? [
+      "http://localhost:*",
+      "https://localhost:*",
+      "http://127.0.0.1:*",
+      "https://127.0.0.1:*",
+      "https://*.replit.dev",
+      "https://*.repl.co"
+    ] : [])
+  ];
+  
+  if (isIframeContext) {
+    // For iframe contexts: Use only CSP frame-ancestors (no X-Frame-Options to avoid conflicts)
+    const frameAncestors = FRAME_ANCESTORS.join(' ');
+    res.setHeader('Content-Security-Policy', `frame-ancestors ${frameAncestors}`);
+    
+    // DO NOT set X-Frame-Options when allowing iframe embedding to avoid conflicts
+    // Modern browsers prefer CSP frame-ancestors over X-Frame-Options
+    
+    // Enable iframe embedding features with corrected headers
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+    // Note: Cross-Origin-Embedder-Policy removed as 'unsafe-none' was invalid
+  } else {
+    // Default: prevent framing for non-iframe contexts
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Content-Security-Policy', "frame-ancestors 'self'");
+  }
+  
+  // Additional security headers (always applied)
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();
