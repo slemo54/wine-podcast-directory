@@ -15,12 +15,10 @@ const EPISODE_LENGTHS = [
   { value: "10-20 minutes", label: "10-20 minutes" },
   { value: "20-40 minutes", label: "20-40 minutes" },
   { value: "40+ minutes", label: "40+ minutes" },
-  { value: "40min+", label: "40min+" },
 ];
 
 const CATEGORIES = [
   "Educational",
-  "Eucational", // Typo in data - keeping both
   "Entertainment",
   "Regional",
   "Wine Business",
