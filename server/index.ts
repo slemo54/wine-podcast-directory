@@ -89,7 +89,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     res.setHeader('Content-Security-Policy', "frame-ancestors 'none'");
     res.setHeader('X-Frame-Options', 'DENY');
   } else {
-    // Public routes: allow iframe embedding from WordPress domains
+    // Public routes: allow iframe embedding from WordPress domains (v2.0-2024-09-19)
     res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://*.wordpress.com https://italianwinepodcast.com https://www.italianwinepodcast.com");
     // Do not set X-Frame-Options for public routes to avoid CSP conflicts
   }
