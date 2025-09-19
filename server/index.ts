@@ -79,23 +79,6 @@ app.use(cors(corsOptions));
 
 // Security headers for iframe embedding
 app.use((req: Request, res: Response, next: NextFunction) => {
-  // Define frame ancestors allowlist with environment variable support
-  const FRAME_ANCESTORS = [
-    "'self'",
-    "https://*.wordpress.com",
-    // Add custom domains from environment variable (comma-separated)
-    ...(process.env.FRAME_ANCESTORS ? process.env.FRAME_ANCESTORS.split(',').map(domain => domain.trim()) : []),
-    // Development domains
-    ...(process.env.NODE_ENV !== 'production' ? [
-      "http://localhost:*",
-      "https://localhost:*",
-      "http://127.0.0.1:*",
-      "https://127.0.0.1:*",
-      "https://*.replit.dev",
-      "https://*.repl.co"
-    ] : [])
-  ];
-  
   // Check if this is a sensitive route that should not be embedded
   const isSensitiveRoute = req.path.startsWith('/admin') || 
                           req.path.startsWith('/auth') || 
@@ -106,9 +89,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     res.setHeader('Content-Security-Policy', "frame-ancestors 'none'");
     res.setHeader('X-Frame-Options', 'DENY');
   } else {
-    // Public routes: allow iframe embedding from allowed domains
-    const frameAncestors = FRAME_ANCESTORS.join(' ');
-    res.setHeader('Content-Security-Policy', `frame-ancestors ${frameAncestors}`);
+    // Public routes: allow iframe embedding from WordPress domains
+    res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://*.wordpress.com https://italianwinepodcast.com https://www.italianwinepodcast.com");
     // Do not set X-Frame-Options for public routes to avoid CSP conflicts
   }
   
