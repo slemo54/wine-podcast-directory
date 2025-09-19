@@ -74,30 +74,30 @@ export default function Home() {
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
       <header className="wine-gradient text-white relative overflow-hidden">
-        <div className="container mx-auto px-4 py-8 relative z-10">
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex-1">
-              <h1 className="text-4xl md:text-6xl font-bold mb-4 text-shadow">
+        <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 relative z-10">
+          <div className="flex flex-col sm:flex-row sm:justify-between items-center sm:items-start mb-3 sm:mb-4 text-center sm:text-left">
+            <div className="flex-1 mb-3 sm:mb-0">
+              <h1 className="text-2xl sm:text-4xl md:text-6xl font-bold mb-2 sm:mb-4 text-shadow leading-tight">
                 Wine Podcast Directory
               </h1>
-              <p className="text-xl md:text-2xl opacity-90">
+              <p className="text-base sm:text-xl md:text-2xl opacity-90 px-4 sm:px-0">
                 Discover premium wine podcasts from around the world
               </p>
             </div>
             
             {/* Navigation - User Menu or Login Button */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               {isAuthenticated ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="text-white hover:bg-white/10 p-2" data-testid="button-user-menu">
-                      <Avatar className="w-8 h-8 mr-2">
+                    <Button variant="ghost" className="text-white hover:bg-white/10 p-1 sm:p-2" data-testid="button-user-menu">
+                      <Avatar className="w-7 h-7 sm:w-8 sm:h-8 mr-1 sm:mr-2">
                         <AvatarImage src={user?.profileImageUrl || undefined} />
-                        <AvatarFallback className="text-wine-dark">
+                        <AvatarFallback className="text-wine-dark text-xs sm:text-sm">
                           {getUserDisplayName().charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="hidden md:inline">{getUserDisplayName()}</span>
+                      <span className="hidden sm:inline text-sm sm:text-base">{getUserDisplayName()}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
@@ -122,10 +122,11 @@ export default function Home() {
                   variant="secondary"
                   onClick={() => window.location.href = "/auth"}
                   data-testid="button-login"
-                  className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+                  className="bg-white/10 hover:bg-white/20 text-white border-white/20 text-sm sm:text-base px-3 sm:px-4 py-2"
                 >
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Sign In
+                  <LogIn className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden xs:inline">Sign In</span>
+                  <span className="xs:hidden">Login</span>
                 </Button>
               )}
             </div>
@@ -136,11 +137,11 @@ export default function Home() {
       </header>
 
       {/* Navigation Tabs */}
-      <nav className="bg-card border-b border-border sticky top-0 z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex space-x-8">
+      <nav className="bg-card border-b border-border sticky top-0 z-50 overflow-x-auto">
+        <div className="container mx-auto px-2 sm:px-4">
+          <div className="flex space-x-2 sm:space-x-8 min-w-max sm:min-w-0">
             <button 
-              className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-3 sm:py-4 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base ${
                 activeTab === "discover" 
                   ? "border-primary text-primary" 
                   : "border-transparent text-muted-foreground hover:text-foreground"
@@ -154,7 +155,7 @@ export default function Home() {
             {isAuthenticated && (
               <>
                 <button 
-                  className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+                  className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-3 sm:py-4 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base ${
                     activeTab === "favorites" 
                       ? "border-primary text-primary" 
                       : "border-transparent text-muted-foreground hover:text-foreground"
@@ -163,10 +164,11 @@ export default function Home() {
                   data-testid="tab-favorites"
                 >
                   <Heart className="w-4 h-4" />
-                  <span>Favorites ({userFavorites.length})</span>
+                  <span className="hidden xs:inline">Favorites ({userFavorites.length})</span>
+                  <span className="xs:hidden">♥ {userFavorites.length}</span>
                 </button>
                 <button 
-                  className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+                  className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-3 sm:py-4 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base ${
                     activeTab === "notes" 
                       ? "border-primary text-primary" 
                       : "border-transparent text-muted-foreground hover:text-foreground"
@@ -175,10 +177,11 @@ export default function Home() {
                   data-testid="tab-notes"
                 >
                   <FileText className="w-4 h-4" />
-                  <span>Notes</span>
+                  <span className="hidden sm:inline">Notes</span>
+                  <span className="sm:hidden">📝</span>
                 </button>
                 <button 
-                  className={`flex items-center gap-2 px-4 py-4 border-b-2 font-medium transition-colors ${
+                  className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-3 sm:py-4 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base ${
                     activeTab === "import" 
                       ? "border-primary text-primary" 
                       : "border-transparent text-muted-foreground hover:text-foreground"
@@ -187,7 +190,8 @@ export default function Home() {
                   data-testid="tab-import"
                 >
                   <Upload className="w-4 h-4" />
-                  <span>Import CSV</span>
+                  <span className="hidden sm:inline">Import CSV</span>
+                  <span className="sm:hidden">⬆️</span>
                 </button>
               </>
             )}
@@ -195,7 +199,7 @@ export default function Home() {
         </div>
       </nav>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
         {/* Discover Tab */}
         {activeTab === "discover" && (
           <>
@@ -206,10 +210,10 @@ export default function Home() {
             />
 
             {/* Podcast Grid */}
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Discover Podcasts</h2>
-                <div className="flex items-center gap-2">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
+                <h2 className="text-xl sm:text-2xl font-bold">Discover Podcasts</h2>
+                <div className="flex items-center gap-2 hidden sm:flex">
                   <Button
                     variant={viewMode === "grid" ? "default" : "outline"}
                     size="sm"
@@ -230,9 +234,9 @@ export default function Home() {
               </div>
 
               {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                   {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="h-96 bg-muted animate-pulse rounded-xl" />
+                    <div key={i} className="h-64 sm:h-96 bg-muted animate-pulse rounded-xl" />
                   ))}
                 </div>
               ) : podcasts.length === 0 ? (
@@ -244,7 +248,7 @@ export default function Home() {
                   <p className="text-muted-foreground">Try adjusting your search criteria or import some podcast data.</p>
                 </div>
               ) : (
-                <div className={`grid gap-6 ${
+                <div className={`grid gap-4 sm:gap-6 ${
                   viewMode === "grid" 
                     ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
                     : "grid-cols-1"
@@ -267,10 +271,10 @@ export default function Home() {
         {/* Favorites Tab */}
         {activeTab === "favorites" && (
           <>
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Your Favorites ({userFavorites.length})</h2>
-                <div className="flex items-center gap-2">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
+                <h2 className="text-xl sm:text-2xl font-bold">Your Favorites ({userFavorites.length})</h2>
+                <div className="flex items-center gap-2 hidden sm:flex">
                   <Button
                     variant={viewMode === "grid" ? "default" : "outline"}
                     size="sm"
@@ -299,7 +303,7 @@ export default function Home() {
                   <p className="text-muted-foreground">Start exploring podcasts and add them to your favorites!</p>
                 </div>
               ) : (
-                <div className={`grid gap-6 ${
+                <div className={`grid gap-4 sm:gap-6 ${
                   viewMode === "grid" 
                     ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
                     : "grid-cols-1"

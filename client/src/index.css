@@ -160,10 +160,42 @@
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
 
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+
+  /* Mobile Overflow Prevention - Critical for eliminating horizontal scroll */
+  @media (max-width: 768px) {
+    html, body {
+      overflow-x: hidden !important;
+      max-width: 100vw;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    /* Prevent flex item overflow */
+    .flex > *, [class*="flex-"] > * {
+      min-width: 0;
+    }
+    
+    /* Container constraints */
+    .container {
+      max-width: 100vw !important;
+      padding-left: 0.5rem !important;
+      padding-right: 0.5rem !important;
+    }
+    
+    /* Grid item constraints */
+    [class*="grid-cols"] > * {
+      min-width: 0;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+    
+    /* Text truncation improvements */
+    [class*="truncate"] {
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+    }
   }
 }

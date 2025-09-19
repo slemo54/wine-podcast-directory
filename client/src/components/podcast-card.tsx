@@ -206,13 +206,13 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
     return (
       <TooltipProvider>
         <div className="podcast-card group bg-card rounded-2xl border border-border/50 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-wine-500/10 transition-all duration-500 hover:-translate-y-1 hover:border-wine-300/50">
-          <div className="p-6 flex gap-6">
+          <div className="p-3 sm:p-6 flex flex-col sm:flex-row gap-4 sm:gap-6">
             {/* Left side - Enhanced Podcast image */}
-            <div className="relative flex-shrink-0">
+            <div className="relative flex-shrink-0 mx-auto sm:mx-0">
               <PodcastImage
                 src={podcast.imageUrl ?? undefined}
                 alt={`${podcast.title} podcast logo`}
-                className="w-28 h-28 rounded-2xl group-hover:scale-105 transition-transform duration-700"
+                className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl group-hover:scale-105 transition-transform duration-700"
                 testId={`img-podcast-list-${podcast.id}`}
               />
               
@@ -227,10 +227,10 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
                       onClick={handleFavoriteToggle}
                       disabled={isAuthenticated && (addFavoriteMutation.isPending || removeFavoriteMutation.isPending)}
                       data-testid={`button-favorite-${podcast.id}`}
-                      className="w-8 h-8 bg-wine-100 hover:bg-wine-200 dark:bg-wine-900 dark:hover:bg-wine-800 border border-wine-200 dark:border-wine-700 rounded-full transition-all duration-300 hover:scale-110"
+                      className="w-7 h-7 sm:w-8 sm:h-8 bg-wine-100 hover:bg-wine-200 dark:bg-wine-900 dark:hover:bg-wine-800 border border-wine-200 dark:border-wine-700 rounded-full transition-all duration-300 hover:scale-110"
                     >
                       <Heart 
-                        className={`w-3.5 h-3.5 transition-all duration-300 ${isAuthenticated && isFavorited ? "fill-red-500 text-red-500 scale-110" : "text-wine-600 dark:text-wine-300 group-hover:text-red-400"}`}
+                        className={`w-3 h-3 sm:w-3.5 sm:h-3.5 transition-all duration-300 ${isAuthenticated && isFavorited ? "fill-red-500 text-red-500 scale-110" : "text-wine-600 dark:text-wine-300 group-hover:text-red-400"}`}
                       />
                     </Button>
                   </TooltipTrigger>
@@ -244,26 +244,26 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
             {/* Content Section */}
             <div className="flex-1 min-w-0">
               {/* Title and Host */}
-              <div className="mb-4">
-                <h3 className="font-bold text-xl leading-tight line-clamp-2 text-foreground group-hover:text-wine-700 transition-colors duration-300 mb-2">
+              <div className="mb-3 sm:mb-4 text-center sm:text-left">
+                <h3 className="font-bold text-lg sm:text-xl leading-tight truncate sm:line-clamp-2 text-foreground group-hover:text-wine-700 transition-colors duration-300 mb-1 sm:mb-2">
                   {podcast.title}
                 </h3>
-                <p className="text-base text-muted-foreground font-medium">
+                <p className="text-sm sm:text-base text-muted-foreground font-medium">
                   Hosted by {podcast.host}
                 </p>
               </div>
 
               {/* Metadata in organized layout */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4">
                 <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="w-4 h-4 text-wine-500 flex-shrink-0" />
+                  <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-wine-500 flex-shrink-0" />
                   <div className="flex flex-col min-w-0">
-                    <span className="font-medium text-foreground truncate">{podcast.country}</span>
-                    <span className="text-xs text-muted-foreground truncate">{podcast.language}</span>
+                    <span className="font-medium text-foreground truncate text-xs sm:text-sm">{podcast.country}</span>
+                    <span className="text-xs text-muted-foreground truncate hidden sm:block">{podcast.language}</span>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-sm sm:block hidden">
                   <Calendar className="w-4 h-4 text-wine-500 flex-shrink-0" />
                   <div className="flex flex-col min-w-0">
                     <span className="font-medium text-foreground">{podcast.year}</span>
@@ -272,7 +272,7 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
                 </div>
                 
                 {podcast.episodeLength && (
-                  <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2 text-sm hidden lg:flex">
                     <Clock className="w-4 h-4 text-wine-500 flex-shrink-0" />
                     <div className="flex flex-col min-w-0">
                       <span className="font-medium text-foreground truncate">{podcast.episodeLength}</span>
@@ -283,34 +283,34 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
               </div>
 
               {/* Categories */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                {podcast.categories.slice(0, 4).map(category => (
+              <div className="flex flex-wrap gap-1 sm:gap-2 mb-3 sm:mb-4 justify-center sm:justify-start">
+                {podcast.categories.slice(0, podcast.categories.length > 3 ? 2 : 3).map(category => (
                   <Badge 
                     key={category} 
                     variant="secondary" 
-                    className="bg-wine-50 text-wine-700 border-wine-200 hover:bg-wine-100 transition-colors duration-200 text-xs px-3 py-1"
+                    className="bg-wine-50 text-wine-700 border-wine-200 hover:bg-wine-100 transition-colors duration-200 text-xs px-2 sm:px-3 py-1"
                   >
                     {category}
                   </Badge>
                 ))}
-                {podcast.categories.length > 4 && (
-                  <Badge variant="outline" className="text-xs px-3 py-1 text-muted-foreground">
-                    +{podcast.categories.length - 4} more
+                {podcast.categories.length > 3 && (
+                  <Badge variant="outline" className="text-xs px-2 sm:px-3 py-1 text-muted-foreground">
+                    +{podcast.categories.length - 2} more
                   </Badge>
                 )}
               </div>
 
-              {/* Description */}
+              {/* Description - Hidden on mobile to save space */}
               {podcast.description && (
-                <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mb-4">
+                <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mb-3 sm:mb-4 hidden sm:block">
                   {podcast.description}
                 </p>
               )}
 
               {/* Social Links Footer */}
-              <div className="flex items-center justify-end pt-4 border-t border-border/50">
-                <div className="flex gap-2">
-                  {availableSocials.map(platform => {
+              <div className="flex items-center justify-center sm:justify-end pt-3 sm:pt-4 border-t border-border/50">
+                <div className="flex gap-1 sm:gap-2">
+                  {availableSocials.map((platform, index) => {
                     const IconComponent = SOCIAL_ICON_MAP[platform as keyof typeof SOCIAL_ICON_MAP];
                     return (
                       <Tooltip key={platform}>
@@ -319,12 +319,12 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
                             href={getSocialUrl(platform, podcast.socialLinks?.[platform as keyof typeof podcast.socialLinks] || '')}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={`w-9 h-9 rounded-full flex items-center justify-center text-white transition-all duration-300 hover:scale-110 hover:shadow-lg ${
+                            className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-white transition-all duration-300 hover:scale-110 hover:shadow-lg ${
                               SOCIAL_COLOR_MAP[platform as keyof typeof SOCIAL_COLOR_MAP]
-                            }`}
+                            } ${index > 1 ? 'hidden sm:flex' : ''}`}
                             data-testid={`link-social-${platform}-${podcast.id}`}
                           >
-                            <IconComponent className="w-4 h-4" />
+                            <IconComponent className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </a>
                         </TooltipTrigger>
                         <TooltipContent>
@@ -347,7 +347,7 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
     <TooltipProvider>
       <div className="podcast-card group bg-card rounded-2xl border border-border/50 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-wine-500/10 transition-all duration-500 hover:-translate-y-1 hover:border-wine-300/50">
         {/* Podcast Image with Enhanced Wine Background */}
-        <div className="relative h-48 overflow-hidden">
+        <div className="relative h-40 sm:h-48 overflow-hidden">
           <PodcastImage
             src={podcast.imageUrl ?? undefined}
             alt={`${podcast.title} podcast logo`}
@@ -357,7 +357,7 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
           
           
           {/* Favorite Button - Top Right */}
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -366,10 +366,10 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
                   onClick={handleFavoriteToggle}
                   disabled={isAuthenticated && (addFavoriteMutation.isPending || removeFavoriteMutation.isPending)}
                   data-testid={`button-favorite-${podcast.id}`}
-                  className="w-9 h-9 bg-black/20 hover:bg-black/40 backdrop-blur-md text-white border-0 rounded-full transition-all duration-300 hover:scale-110"
+                  className="w-8 h-8 sm:w-9 sm:h-9 bg-black/20 hover:bg-black/40 backdrop-blur-md text-white border-0 rounded-full transition-all duration-300 hover:scale-110"
                 >
                   <Heart 
-                    className={`w-4 h-4 transition-all duration-300 ${isAuthenticated && isFavorited ? "fill-red-500 text-red-500 scale-110" : "text-white group-hover:text-red-200"}`}
+                    className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-all duration-300 ${isAuthenticated && isFavorited ? "fill-red-500 text-red-500 scale-110" : "text-white group-hover:text-red-200"}`}
                   />
                 </Button>
               </TooltipTrigger>
@@ -384,27 +384,27 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
         </div>
 
         {/* Card Content */}
-        <div className="p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
           {/* Title and Host */}
-          <div className="space-y-2">
-            <h3 className="font-bold text-xl leading-tight line-clamp-2 text-foreground group-hover:text-wine-700 transition-colors duration-300">
+          <div className="space-y-1 sm:space-y-2">
+            <h3 className="font-bold text-lg sm:text-xl leading-tight truncate sm:line-clamp-2 text-foreground group-hover:text-wine-700 transition-colors duration-300">
               {podcast.title}
             </h3>
-            <p className="text-base text-muted-foreground font-medium">
+            <p className="text-sm sm:text-base text-muted-foreground font-medium">
               Hosted by {podcast.host}
             </p>
           </div>
 
           {/* Metadata Grid */}
-          <div className="grid grid-cols-2 gap-3 py-2">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin className="w-4 h-4 text-wine-500" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 py-1 sm:py-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center sm:justify-start">
+              <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-wine-500" />
               <div className="flex flex-col">
-                <span className="font-medium text-foreground">{podcast.country}</span>
-                <span className="text-xs">{podcast.language}</span>
+                <span className="font-medium text-foreground text-xs sm:text-sm">{podcast.country}</span>
+                <span className="text-xs hidden sm:block">{podcast.language}</span>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center sm:justify-start hidden sm:flex">
               <Calendar className="w-4 h-4 text-wine-500" />
               <div className="flex flex-col">
                 <span className="font-medium text-foreground">{podcast.year}</span>
@@ -414,40 +414,41 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
           </div>
 
           {podcast.episodeLength && (
-            <div className="flex items-center gap-2 text-sm bg-muted/30 rounded-lg px-3 py-2">
+            <div className="hidden sm:flex items-center gap-2 text-sm bg-muted/30 rounded-lg px-3 py-2">
               <Clock className="w-4 h-4 text-wine-500" />
               <span className="font-medium text-foreground">{podcast.episodeLength}</span>
             </div>
           )}
 
           {/* Categories */}
-          <div className="flex flex-wrap gap-2">
-            {podcast.categories.slice(0, 2).map(category => (
+          <div className="flex flex-wrap gap-1 sm:gap-2 justify-center sm:justify-start">
+            {podcast.categories.slice(0, podcast.categories.length > 2 ? 1 : 2).map(category => (
               <Badge 
                 key={category} 
                 variant="secondary" 
-                className="bg-wine-50 text-wine-700 border-wine-200 hover:bg-wine-100 transition-colors duration-200 text-xs px-3 py-1"
+                className="bg-wine-50 text-wine-700 border-wine-200 hover:bg-wine-100 transition-colors duration-200 text-xs px-2 sm:px-3 py-1"
               >
                 {category}
               </Badge>
             ))}
-            {podcast.categories.length > 2 && (
-              <Badge variant="outline" className="text-xs px-3 py-1 text-muted-foreground">
-                +{podcast.categories.length - 2} more
+            {podcast.categories.length > 1 && (
+              <Badge variant="outline" className="text-xs px-2 sm:px-3 py-1 text-muted-foreground">
+                <span className="sm:hidden">+{podcast.categories.length - 1}</span>
+                <span className="hidden sm:inline">+{podcast.categories.length - 2} more</span>
               </Badge>
             )}
           </div>
 
-          {/* Description */}
+          {/* Description - Hidden on mobile to save space */}
           {podcast.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed hidden sm:block">
               {podcast.description}
             </p>
           )}
 
           {/* Social Links */}
-          <div className="flex items-center justify-center gap-2 pt-2 border-t border-border/50">
-            {availableSocials.map(platform => {
+          <div className="flex items-center justify-center gap-1 sm:gap-2 pt-2 border-t border-border/50">
+            {availableSocials.map((platform, index) => {
               const IconComponent = SOCIAL_ICON_MAP[platform as keyof typeof SOCIAL_ICON_MAP];
               return (
                 <Tooltip key={platform}>
@@ -456,12 +457,12 @@ export function PodcastCard({ podcast, viewMode = "grid", userFavorites, isAuthe
                       href={getSocialUrl(platform, podcast.socialLinks?.[platform as keyof typeof podcast.socialLinks] || '')}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`w-9 h-9 rounded-full flex items-center justify-center text-white transition-all duration-300 hover:scale-110 hover:shadow-lg ${
+                      className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-white transition-all duration-300 hover:scale-110 hover:shadow-lg ${
                         SOCIAL_COLOR_MAP[platform as keyof typeof SOCIAL_COLOR_MAP]
-                      } group-hover:animate-pulse`}
+                      } group-hover:animate-pulse ${index > 1 ? 'hidden sm:flex' : ''}`}
                       data-testid={`link-social-${platform}-${podcast.id}`}
                     >
-                      <IconComponent className="w-4 h-4" />
+                      <IconComponent className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </a>
                   </TooltipTrigger>
                   <TooltipContent>
