@@ -79,12 +79,7 @@ app.use(cors(corsOptions));
 
 // Security headers for iframe embedding
 app.use((req: Request, res: Response, next: NextFunction) => {
-  // Check if request is from iframe context
-  const isIframeContext = req.get('X-Iframe-Context') === 'true' || 
-                         req.query.iframe === 'true' ||
-                         req.path.includes('/iframe');
-  
-  // Define static frame ancestors allowlist with environment variable support
+  // Define frame ancestors allowlist with environment variable support
   const FRAME_ANCESTORS = [
     "'self'",
     "https://*.wordpress.com",
@@ -101,21 +96,20 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     ] : [])
   ];
   
-  if (isIframeContext) {
-    // For iframe contexts: Use only CSP frame-ancestors (no X-Frame-Options to avoid conflicts)
+  // Check if this is a sensitive route that should not be embedded
+  const isSensitiveRoute = req.path.startsWith('/admin') || 
+                          req.path.startsWith('/auth') || 
+                          req.path.startsWith('/api/auth');
+  
+  if (isSensitiveRoute) {
+    // Sensitive routes: prevent all iframe embedding
+    res.setHeader('Content-Security-Policy', "frame-ancestors 'none'");
+    res.setHeader('X-Frame-Options', 'DENY');
+  } else {
+    // Public routes: allow iframe embedding from allowed domains
     const frameAncestors = FRAME_ANCESTORS.join(' ');
     res.setHeader('Content-Security-Policy', `frame-ancestors ${frameAncestors}`);
-    
-    // DO NOT set X-Frame-Options when allowing iframe embedding to avoid conflicts
-    // Modern browsers prefer CSP frame-ancestors over X-Frame-Options
-    
-    // Enable iframe embedding features with corrected headers
-    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
-    // Note: Cross-Origin-Embedder-Policy removed as 'unsafe-none' was invalid
-  } else {
-    // Default: prevent framing for non-iframe contexts
-    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-    res.setHeader('Content-Security-Policy', "frame-ancestors 'self'");
+    // Do not set X-Frame-Options for public routes to avoid CSP conflicts
   }
   
   // Additional security headers (always applied)
