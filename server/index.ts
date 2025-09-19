@@ -35,10 +35,11 @@ const corsOptions = {
       // 'https://www.your-wordpress-site.com',
     ];
     
-    // Check for Replit domains (all Replit subdomains)
-    const isReplitDomain = /^https?:\/\/[\w\-]+\.replit\.dev$/.test(origin) || 
-                          /^https?:\/\/[\w\-]+\.repl\.co$/.test(origin) ||
-                          /^https?:\/\/[\w\-]+-[\w\-]+-[\w\-]+-[\w\-]+-[\w\-]+\.[\w\-]+\.replit\.dev$/.test(origin);
+    // Check for Replit domains (all Replit subdomains) - allow optional ports
+    const isReplitDomain = /^https?:\/\/[\w\-]+\.replit\.dev(:\d+)?$/.test(origin) || 
+                          /^https?:\/\/[\w\-]+\.repl\.co(:\d+)?$/.test(origin) ||
+                          /^https?:\/\/[\w\-]+-[\w\-]+-[\w\-]+-[\w\-]+-[\w\-]+\.[\w\-]+\.replit\.dev(:\d+)?$/.test(origin) ||
+                          /^https?:\/\/[\w\-]+\.replit\.app(:\d+)?$/.test(origin);
     
     // Check for WordPress.com subdomains
     const isWordPressSubdomain = /^https?:\/\/[\w\-]+\.wordpress\.com$/.test(origin);
