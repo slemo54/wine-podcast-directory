@@ -77,23 +77,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Security headers for iframe embedding
+// Basic security headers (CSP removed for iframe embedding compatibility)
 app.use((req: Request, res: Response, next: NextFunction) => {
-  // Check if this is a sensitive route that should not be embedded
-  const isSensitiveRoute = req.path.startsWith('/admin') || 
-                          req.path.startsWith('/auth') || 
-                          req.path.startsWith('/api/auth');
-  
-  if (isSensitiveRoute) {
-    // Sensitive routes: prevent all iframe embedding
-    res.setHeader('Content-Security-Policy', "frame-ancestors 'none'");
-    res.setHeader('X-Frame-Options', 'DENY');
-  } else {
-    // Public routes: allow iframe embedding from WordPress domains (v2.0-2024-09-19)
-    res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://*.wordpress.com https://italianwinepodcast.com https://www.italianwinepodcast.com");
-    // Do not set X-Frame-Options for public routes to avoid CSP conflicts
-  }
-  
   // Additional security headers (always applied)
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -178,6 +163,6 @@ app.use((req, res, next) => {
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`serving on port ${port} - WordPress CSP fix v1.0`);
+    log(`serving on port ${port} - WordPress iframe fix v2.0`);
   });
 })();
