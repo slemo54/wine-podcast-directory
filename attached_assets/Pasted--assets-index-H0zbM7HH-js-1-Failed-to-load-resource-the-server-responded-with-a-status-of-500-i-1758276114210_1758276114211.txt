@@ -1,0 +1,112 @@
+/assets/index-H0zbM7HH.js:1  Failed to load resource: the server responded with a status of 500 ()
+index-BI8OeQtp.css:1  Failed to load resource: the server responded with a status of 500 ()
+contentScript.js:29 no
+iui.js:35 Warning: fragment with name JamAuthor already exists.
+graphql-tag enforces all fragment names across your application to be unique; read more about
+this in the docs: http://dev.apollodata.com/core/fragments.html#unique-names
+(anonymous) @ iui.js:35
+(anonymous) @ iui.js:35
+W @ iui.js:35
+(anonymous) @ iui.js:3292
+(anonymous) @ iui.js:4009
+(anonymous) @ iui.js:4009
+iui.js:35 Warning: fragment with name Reaction already exists.
+graphql-tag enforces all fragment names across your application to be unique; read more about
+this in the docs: http://dev.apollodata.com/core/fragments.html#unique-names
+(anonymous) @ iui.js:35
+(anonymous) @ iui.js:35
+W @ iui.js:35
+(anonymous) @ iui.js:3302
+(anonymous) @ iui.js:4009
+(anonymous) @ iui.js:4009
+iui.js:35 Warning: fragment with name Comment already exists.
+graphql-tag enforces all fragment names across your application to be unique; read more about
+this in the docs: http://dev.apollodata.com/core/fragments.html#unique-names
+(anonymous) @ iui.js:35
+(anonymous) @ iui.js:35
+W @ iui.js:35
+(anonymous) @ iui.js:3311
+(anonymous) @ iui.js:4009
+(anonymous) @ iui.js:4009
+iui.js:35 Warning: fragment with name BaseJam already exists.
+graphql-tag enforces all fragment names across your application to be unique; read more about
+this in the docs: http://dev.apollodata.com/core/fragments.html#unique-names
+(anonymous) @ iui.js:35
+(anonymous) @ iui.js:35
+W @ iui.js:35
+(anonymous) @ iui.js:3414
+(anonymous) @ iui.js:4009
+(anonymous) @ iui.js:4009
+iui.js:35 Warning: fragment with name RecordingLink already exists.
+graphql-tag enforces all fragment names across your application to be unique; read more about
+this in the docs: http://dev.apollodata.com/core/fragments.html#unique-names
+(anonymous) @ iui.js:35
+(anonymous) @ iui.js:35
+W @ iui.js:35
+(anonymous) @ iui.js:3625
+(anonymous) @ iui.js:4009
+(anonymous) @ iui.js:4009
+iui.js:35 Warning: fragment with name User already exists.
+graphql-tag enforces all fragment names across your application to be unique; read more about
+this in the docs: http://dev.apollodata.com/core/fragments.html#unique-names
+(anonymous) @ iui.js:35
+(anonymous) @ iui.js:35
+W @ iui.js:35
+(anonymous) @ iui.js:3657
+(anonymous) @ iui.js:4009
+(anonymous) @ iui.js:4009
+host-console-events.js:2 Uncaught (in promise) Error: Failed to initialize messaging: tx_attempts_exceeded
+{"diagnostics":{"errors":["Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout"]}}
+    at host-console-events.js:2:121861
+    at async pW.getSingleton (host-console-events.js:3:50)
+    at async pq (host-console-events.js:3:234)
+    at async p4 (host-console-events.js:3:2447)
+    at async Object.p6 [as connect] (host-console-events.js:3:2879)
+(anonymous) @ host-console-events.js:2
+Promise.then
+getSingleton @ host-console-events.js:2
+pq @ host-console-events.js:3
+p4 @ host-console-events.js:3
+p6 @ host-console-events.js:3
+(anonymous) @ host-console-events.js:3
+(anonymous) @ host-console-events.js:3
+(anonymous) @ host-console-events.js:3
+host-network-events.js:3 Uncaught (in promise) Error: Failed to initialize messaging: tx_attempts_exceeded
+{"diagnostics":{"errors":["Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout"]}}
+    at host-network-events.js:3:111922
+    at async fM.getSingleton (host-network-events.js:4:50)
+    at async fT (host-network-events.js:4:234)
+    at async f$ (host-network-events.js:4:2447)
+    at async Object.fV [as connect] (host-network-events.js:4:2879)
+(anonymous) @ host-network-events.js:3
+Promise.then
+getSingleton @ host-network-events.js:3
+fT @ host-network-events.js:4
+f$ @ host-network-events.js:4
+fV @ host-network-events.js:4
+(anonymous) @ host-network-events.js:4
+(anonymous) @ host-network-events.js:4
+(anonymous) @ host-network-events.js:4
+host-dom-snapshot.js:2 Uncaught (in promise) Error: Failed to initialize messaging: tx_attempts_exceeded
+{"diagnostics":{"errors":["Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout"]}}
+    at host-dom-snapshot.js:2:113496
+    at async cy.getSingleton (host-dom-snapshot.js:3:50)
+    at async cb (host-dom-snapshot.js:3:228)
+    at async cA (host-dom-snapshot.js:3:2441)
+    at async Object.cI [as connect] (host-dom-snapshot.js:3:2873)
+(anonymous) @ host-dom-snapshot.js:2
+Promise.then
+getSingleton @ host-dom-snapshot.js:2
+cb @ host-dom-snapshot.js:3
+cA @ host-dom-snapshot.js:3
+cI @ host-dom-snapshot.js:3
+(anonymous) @ host-dom-snapshot.js:3
+(anonymous) @ host-dom-snapshot.js:3
+(anonymous) @ host-dom-snapshot.js:3
+host-additional-hooks.js:2 Uncaught (in promise) Error: Failed to initialize messaging: tx_attempts_exceeded
+{"diagnostics":{"errors":["Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout","Error: tx_ack_timeout"]}}
+    at host-additional-hooks.js:2:113621
+    at async cb.getSingleton (host-additional-hooks.js:3:50)
+    at async cw (host-additional-hooks.js:3:231)
+    at async cj (host-additional-hooks.js:3:2444)
+    at async Object.cP [as connect] (host-additional-hooks.js:3:2876)

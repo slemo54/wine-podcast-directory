@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Fixes - Wine Podcast Directory</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .pass { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .fail { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
+        #console-output { background: #000; color: #00ff00; padding: 10px; font-family: monospace; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>Wine Podcast Directory - Fix Validation</h1>
+    <div id="test-results"></div>
+    <h2>Console Output:</h2>
+    <div id="console-output"></div>
+
+    <script src="podcasts-data.js"></script>
+    <script>
+        const results = document.getElementById('test-results');
+        const consoleOutput = document.getElementById('console-output');
+        let testCount = 0;
+        let passCount = 0;
+
+        // Capture console logs
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        console.log = function(...args) {
+            consoleOutput.textContent += 'LOG: ' + args.join(' ') + '\n';
+            originalLog.apply(console, args);
+        };
+
+        console.error = function(...args) {
+            consoleOutput.textContent += 'ERROR: ' + args.join(' ') + '\n';
+            originalError.apply(console, args);
+        };
+
+        console.warn = function(...args) {
+            consoleOutput.textContent += 'WARN: ' + args.join(' ') + '\n';
+            originalWarn.apply(console, args);
+        };
+
+        function runTest(name, testFunc) {
+            testCount++;
+            try {
+                const result = testFunc();
+                if (result) {
+                    passCount++;
+                    results.innerHTML += `<div class="test-result pass">✓ Test ${testCount}: ${name}</div>`;
+                } else {
+                    results.innerHTML += `<div class="test-result fail">✗ Test ${testCount}: ${name} - Failed</div>`;
+                }
+            } catch (error) {
+                results.innerHTML += `<div class="test-result fail">✗ Test ${testCount}: ${name} - Error: ${error.message}</div>`;
+            }
+        }
+
+        // Test 1: PODCAST_DATA exists and is array
+        runTest('PODCAST_DATA exists and is array', () => {
+            return typeof PODCAST_DATA !== 'undefined' && Array.isArray(PODCAST_DATA);
+        });
+
+        // Test 2: PODCAST_DATA has content
+        runTest('PODCAST_DATA has content', () => {
+            return PODCAST_DATA && PODCAST_DATA.length > 0;
+        });
+
+        // Test 3: First podcast has required fields
+        runTest('First podcast has required fields', () => {
+            const first = PODCAST_DATA[0];
+            return first && first.title && first.host && first.country;
+        });
+
+        // Test 4: All podcasts have title property
+        runTest('All podcasts have title property', () => {
+            return PODCAST_DATA.every(p => p.title);
+        });
+
+        // Test 5: Test safe string splitting for language field
+        runTest('Safe language field processing', () => {
+            let hasLanguageField = false;
+            let safeProcessing = true;
+
+            PODCAST_DATA.forEach(p => {
+                if (p.language) {
+                    hasLanguageField = true;
+                    if (typeof p.language === 'string') {
+                        try {
+                            p.language.split(',').forEach(lang => lang.trim());
+                        } catch (e) {
+                            safeProcessing = false;
+                        }
+                    }
+                }
+            });
+
+            return hasLanguageField && safeProcessing;
+        });
+
+        // Test 6: Test safe format field processing
+        runTest('Safe format field processing', () => {
+            let safeProcessing = true;
+
+            PODCAST_DATA.forEach(p => {
+                if (p.format) {
+                    try {
+                        // Test the includes method that was problematic
+                        if (typeof p.format === 'string') {
+                            p.format.includes('test');
+                        }
+                    } catch (e) {
+                        safeProcessing = false;
+                    }
+                }
+            });
+
+            return safeProcessing;
+        });
+
+        // Test 7: Simulate the main script loading process
+        runTest('Simulate main script loading process', () => {
+            try {
+                // This simulates the key parts of loadPodcastData function
+                const podcasts = PODCAST_DATA || [];
+                const filteredPodcasts = [...podcasts];
+
+                // Test populateFilters logic
+                const countries = new Set();
+                const languages = new Set();
+
+                podcasts.forEach(p => {
+                    if (p.country) countries.add(p.country);
+                    if (p.language && typeof p.language === 'string') {
+                        p.language.split(',').forEach(lang => languages.add(lang.trim()));
+                    }
+                });
+
+                // Test stats logic
+                const totalPodcasts = podcasts.length;
+                const activePodcasts = podcasts.filter(p => p.active === 'Yes').length;
+                const countriesCount = new Set(podcasts.map(p => p.country).filter(c => c)).size;
+
+                return totalPodcasts > 0 && countriesCount > 0;
+            } catch (error) {
+                console.error('Error in simulation:', error);
+                return false;
+            }
+        });
+
+        // Summary
+        setTimeout(() => {
+            results.innerHTML += `<div class="test-result info"><strong>Summary: ${passCount}/${testCount} tests passed</strong></div>`;
+            if (passCount === testCount) {
+                results.innerHTML += `<div class="test-result pass"><strong>🎉 All tests passed! The infinite loading issue should be fixed.</strong></div>`;
+            } else {
+                results.innerHTML += `<div class="test-result fail"><strong>⚠️ Some tests failed. There may still be issues with the application.</strong></div>`;
+            }
+        }, 100);
+    </script>
+</body>
+</html>

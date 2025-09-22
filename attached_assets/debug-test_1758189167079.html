@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Test - Wine Podcast Directory</title>
+</head>
+<body>
+    <div id="debug-output">
+        <h1>Debug Test</h1>
+        <div id="results"></div>
+    </div>
+
+    <script src="podcasts-data.js"></script>
+    <script>
+        const results = document.getElementById('results');
+
+        try {
+            console.log('Testing PODCAST_DATA...');
+            console.log('PODCAST_DATA type:', typeof PODCAST_DATA);
+            console.log('PODCAST_DATA length:', PODCAST_DATA ? PODCAST_DATA.length : 'undefined');
+            console.log('First podcast:', PODCAST_DATA ? PODCAST_DATA[0] : 'undefined');
+
+            results.innerHTML = `
+                <p><strong>PODCAST_DATA Type:</strong> ${typeof PODCAST_DATA}</p>
+                <p><strong>Array Length:</strong> ${PODCAST_DATA ? PODCAST_DATA.length : 'undefined'}</p>
+                <p><strong>Data Loaded:</strong> ${PODCAST_DATA && PODCAST_DATA.length > 0 ? 'YES' : 'NO'}</p>
+                <p><strong>First Podcast Title:</strong> ${PODCAST_DATA && PODCAST_DATA[0] ? PODCAST_DATA[0].title : 'undefined'}</p>
+            `;
+
+            if (!PODCAST_DATA) {
+                results.innerHTML += '<p style="color: red;"><strong>ERROR: PODCAST_DATA is undefined</strong></p>';
+            } else if (!Array.isArray(PODCAST_DATA)) {
+                results.innerHTML += '<p style="color: red;"><strong>ERROR: PODCAST_DATA is not an array</strong></p>';
+            } else if (PODCAST_DATA.length === 0) {
+                results.innerHTML += '<p style="color: red;"><strong>ERROR: PODCAST_DATA array is empty</strong></p>';
+            } else {
+                results.innerHTML += '<p style="color: green;"><strong>SUCCESS: Data loaded correctly</strong></p>';
+            }
+
+        } catch (error) {
+            console.error('Error during test:', error);
+            results.innerHTML = `<p style="color: red;"><strong>ERROR:</strong> ${error.message}</p>`;
+        }
+    </script>
+</body>
+</html>
